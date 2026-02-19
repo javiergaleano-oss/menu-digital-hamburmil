@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Resumen del Pedido</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .pedido-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .total {
+            font-size: 22px;
+            font-weight: bold;
+            color: green;
+            margin-top: 20px;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 15px;
+            text-decoration: none;
+            background-color: #007bff;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>🧾 Resumen del Pedido</h1>
+
+    {% if productos %}
+        {% for producto in productos %}
+        <div class="pedido-card">
+            <h3>{{ producto['DESCRIPCION'] }}</h3>
+            <p>Precio: $ {{ producto['PRECIO'] }}</p>
+            <p>Cantidad: {{ producto['CANTIDAD'] }}</p>
+            <p>Subtotal: $ {{ producto['SUBTOTAL'] }}</p>
+        </div>
+        {% endfor %}
+
+        <div class="total">
+            Total a pagar: $ {{ total }}
+        </div>
+    {% else %}
+        <p>No seleccionaste ningún producto.</p>
+    {% endif %}
+
+    <a href="/">⬅ Volver al menú</a>
+
+</body>
+</html>
