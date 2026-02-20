@@ -1,0 +1,15 @@
+<h1>Carrito</h1>
+
+{% for item in carrito %}
+    <p>{{ item.DESCRIPCION }} - ${{ item.PRECIO }}</p>
+{% endfor %}
+
+<h3>Total: ${{ total }}</h3>
+
+<a href="{{ url_for('limpiar') }}">
+    <button>Vaciar carrito</button>
+</a>
+
+<a href="{{ url_for('index') }}">
+    <button>Seguir comprando</button>
+</a>

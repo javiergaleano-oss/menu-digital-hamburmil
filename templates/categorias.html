@@ -1,0 +1,11 @@
+<h1>Categorías</h1>
+
+{% for categoria in categorias %}
+    <a href="{{ url_for('ver_categoria', nombre=categoria) }}">
+        <button>{{ categoria }}</button>
+    </a>
+{% endfor %}
+
+<a href="{{ url_for('ver_carrito') }}">
+    <button>Ver Carrito</button>
+</a>

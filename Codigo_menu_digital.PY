@@ -1,17 +1,22 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for, session
 import pandas as pd
+import os
 
 app = Flask(__name__)
+app.secret_key = "supersecretkey"  # Necesario para usar session
 
-# ==========================================
-# CARGAR BASE DE DATOS
-# ==========================================
+# ==============================
+# CONFIGURACIÓN
+# ==============================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CSV_PATH = os.path.join(BASE_DIR, "BASE DE DATOS MENU COMIDAS RAPIDAS.csv")
+
+
+# ==============================
+# CARGAR MENU
+# ==============================
 def cargar_menu():
-    df = pd.read_csv(
-        "BASE DE DATOS MENU COMIDAS RAPIDAS.csv",
-        encoding="utf-8",
-        sep=";"   # 👈 ESTA ES LA CLAVE
-    )
+    df = pd.read_csv(CSV_PATH, encoding="utf-8", sep=";")
 
     df.columns = (
         df.columns
@@ -20,61 +25,93 @@ def cargar_menu():
         .str.replace(" ", "", regex=False)
     )
 
-    print("Columnas detectadas:", df.columns)
-
-    if "REFERENCIA" in df.columns:
-        df["REFERENCIA"] = df["REFERENCIA"].astype(str)
-
-    if "PRECIO" in df.columns:
-        df["PRECIO"] = pd.to_numeric(df["PRECIO"], errors="coerce")
+    df["REFERENCIA"] = df["REFERENCIA"].astype(str)
+    df["PRECIO"] = pd.to_numeric(df["PRECIO"], errors="coerce").fillna(0)
 
     return df
 
-# ==========================================
-# PAGINA PRINCIPAL
-# ==========================================
+
+# ==============================
+# PAGINA PRINCIPAL (CATEGORIAS)
+# ==============================
 @app.route("/")
 def index():
     menu = cargar_menu()
+
+    categorias = sorted(menu["CATEGORIA"].dropna().unique())
+
+    return render_template("categorias.html", categorias=categorias)
+
+
+# ==============================
+# VER PRODUCTOS POR CATEGORIA
+# ==============================
+@app.route("/categoria/<nombre>")
+def ver_categoria(nombre):
+    menu = cargar_menu()
+    productos = menu[menu["CATEGORIA"] == nombre]
+
     return render_template(
-        "index.html",
-        menu=menu.to_dict(orient="records")
+        "productos.html",
+        categoria=nombre,
+        productos=productos.to_dict(orient="records")
     )
 
 
-# ==========================================
-# PROCESAR PEDIDO
-# ==========================================
-@app.route("/pedido", methods=["POST"])
-def pedido():
+# ==============================
+# AGREGAR AL CARRITO
+# ==============================
+@app.route("/agregar", methods=["POST"])
+def agregar():
 
-    menu = cargar_menu()
-    productos_pedido = []
-    total = 0
+    referencia = request.form.get("referencia")
+    descripcion = request.form.get("descripcion")
+    precio = float(request.form.get("precio"))
 
-    for _, producto in menu.iterrows():
-        referencia = str(producto["REFERENCIA"])
-        cantidad = request.form.get(f"cantidad_{referencia}")
+    if "carrito" not in session:
+        session["carrito"] = []
 
-        if cantidad and int(cantidad) > 0:
-            cantidad = int(cantidad)
-            subtotal = cantidad * producto["PRECIO"]
+    carrito = session["carrito"]
 
-            productos_pedido.append({
-                "DESCRIPCION": producto["DESCRIPCION"],
-                "PRECIO": producto["PRECIO"],
-                "CANTIDAD": cantidad,
-                "SUBTOTAL": subtotal
-            })
+    carrito.append({
+        "REFERENCIA": referencia,
+        "DESCRIPCION": descripcion,
+        "PRECIO": precio
+    })
 
-            total += subtotal
+    session["carrito"] = carrito
+
+    return redirect(url_for("ver_carrito"))
+
+
+# ==============================
+# VER CARRITO
+# ==============================
+@app.route("/carrito")
+def ver_carrito():
+
+    carrito = session.get("carrito", [])
+    total = sum(item["PRECIO"] for item in carrito)
 
     return render_template(
-        "pedido.html",
-        productos=productos_pedido,
+        "carrito.html",
+        carrito=carrito,
         total=total
     )
 
 
+# ==============================
+# LIMPIAR CARRITO
+# ==============================
+@app.route("/limpiar")
+def limpiar():
+    session.pop("carrito", None)
+    return redirect(url_for("index"))
+
+
+# ==============================
+# EJECUCION
+# ==============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

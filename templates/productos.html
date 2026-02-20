@@ -1,0 +1,17 @@
+<h1>{{ categoria }}</h1>
+
+{% for producto in productos %}
+    <form method="POST" action="{{ url_for('agregar') }}">
+        <p>{{ producto.DESCRIPCION }} - ${{ producto.PRECIO }}</p>
+
+        <input type="hidden" name="referencia" value="{{ producto.REFERENCIA }}">
+        <input type="hidden" name="descripcion" value="{{ producto.DESCRIPCION }}">
+        <input type="hidden" name="precio" value="{{ producto.PRECIO }}">
+
+        <button type="submit">Agregar</button>
+    </form>
+{% endfor %}
+
+<a href="{{ url_for('index') }}">
+    <button>Volver a Categorías</button>
+</a>
