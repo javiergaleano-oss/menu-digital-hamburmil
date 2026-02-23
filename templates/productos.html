@@ -1,17 +1,30 @@
-<h1>{{ categoria }}</h1>
+{% extends "base.html" %}
 
-{% for producto in productos %}
-    <form method="POST" action="{{ url_for('agregar') }}">
-        <p>{{ producto.DESCRIPCION }} - ${{ producto.PRECIO }}</p>
+{% block content %}
 
-        <input type="hidden" name="referencia" value="{{ producto.REFERENCIA }}">
-        <input type="hidden" name="descripcion" value="{{ producto.DESCRIPCION }}">
-        <input type="hidden" name="precio" value="{{ producto.PRECIO }}">
+<h2 class="text-center mb-4">{{ categoria }}</h2>
 
-        <button type="submit">Agregar</button>
-    </form>
-{% endfor %}
+<div class="row">
+    {% for p in productos %}
+    <div class="col-md-4 mb-4">
+        <div class="card card-producto shadow p-3">
+            <h5>{{ p.DESCRIPCION }}</h5>
+            <p class="precio">
+                $ {{ "{:,.0f}".format(p.PRECIO) }}
+            </p>
 
-<a href="{{ url_for('index') }}">
-    <button>Volver a Categorías</button>
-</a>
+            <form action="/agregar" method="POST">
+                <input type="hidden" name="referencia" value="{{ p.REFERENCIA }}">
+                <input type="hidden" name="descripcion" value="{{ p.DESCRIPCION }}">
+                <input type="hidden" name="precio" value="{{ p.PRECIO }}">
+
+                <button class="btn btn-success w-100">
+                    Agregar al carrito
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

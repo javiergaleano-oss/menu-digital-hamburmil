@@ -103,6 +103,8 @@ def ver_carrito():
 # ==============================
 # LIMPIAR CARRITO
 # ==============================
+
+
 @app.route("/limpiar")
 def limpiar():
     session.pop("carrito", None)

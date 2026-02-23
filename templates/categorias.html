@@ -1,11 +1,20 @@
-<h1>Categorías</h1>
+{% extends "base.html" %}
 
-{% for categoria in categorias %}
-    <a href="{{ url_for('ver_categoria', nombre=categoria) }}">
-        <button>{{ categoria }}</button>
-    </a>
-{% endfor %}
+{% block content %}
 
-<a href="{{ url_for('ver_carrito') }}">
-    <button>Ver Carrito</button>
-</a>
+<h2 class="text-center mb-4">Categorías</h2>
+
+<div class="row">
+    {% for categoria in categorias %}
+    <div class="col-md-4 mb-4">
+        <div class="card card-producto shadow p-4 text-center">
+            <h4>{{ categoria }}</h4>
+            <a href="/categoria/{{ categoria }}" class="btn btn-danger mt-3">
+                Ver productos
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

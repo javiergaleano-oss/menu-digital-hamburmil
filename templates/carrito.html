@@ -1,15 +1,38 @@
-<h1>Carrito</h1>
+{% extends "base.html" %}
 
-{% for item in carrito %}
-    <p>{{ item.DESCRIPCION }} - ${{ item.PRECIO }}</p>
-{% endfor %}
+{% block content %}
 
-<h3>Total: ${{ total }}</h3>
+<h2 class="text-center mb-4">🛒 Tu Carrito</h2>
 
-<a href="{{ url_for('limpiar') }}">
-    <button>Vaciar carrito</button>
-</a>
+{% if carrito %}
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Producto</th>
+            <th>Precio</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in carrito %}
+        <tr>
+            <td>{{ item.DESCRIPCION }}</td>
+            <td>$ {{ "{:,.0f}".format(item.PRECIO) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
-<a href="{{ url_for('index') }}">
-    <button>Seguir comprando</button>
-</a>
+<div class="text-end">
+    <h4>Total: $ {{ "{:,.0f}".format(total) }}</h4>
+</div>
+
+<div class="d-flex justify-content-between mt-3">
+    <a href="/" class="btn btn-secondary">Seguir comprando</a>
+    <a href="/limpiar" class="btn btn-danger">Vaciar carrito</a>
+</div>
+
+{% else %}
+<p class="text-center">El carrito está vacío.</p>
+{% endif %}
+
+{% endblock %}
