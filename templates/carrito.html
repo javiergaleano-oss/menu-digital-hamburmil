@@ -1,38 +1,124 @@
 {% extends "base.html" %}
-
 {% block content %}
 
-<h2 class="text-center mb-4">🛒 Tu Carrito</h2>
+<h2 class="mb-4">🛒 Tu Pedido</h2>
 
 {% if carrito %}
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>Producto</th>
-            <th>Precio</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in carrito %}
-        <tr>
-            <td>{{ item.DESCRIPCION }}</td>
-            <td>$ {{ "{:,.0f}".format(item.PRECIO) }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
 
-<div class="text-end">
-    <h4>Total: $ {{ "{:,.0f}".format(total) }}</h4>
-</div>
+<ul class="list-group mb-3">
+    {% for item in carrito %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ item.CATEGORIA }}</strong><br>
+                {{ item.DESCRIPCION }}
+            </div>
+            <span class="fw-bold text-success">
+                $ {{ "{:,.0f}".format(item.PRECIO) }}
+            </span>
+        </li>
+    {% endfor %}
+</ul>
 
-<div class="d-flex justify-content-between mt-3">
-    <a href="/" class="btn btn-secondary">Seguir comprando</a>
-    <a href="/limpiar" class="btn btn-danger">Vaciar carrito</a>
-</div>
+<h4 class="text-end mb-4">
+    Total: $ {{ "{:,.0f}".format(total) }}
+</h4>
+
+<hr>
+
+<h4 class="mb-3">Finalizar Pedido</h4>
+
+<form action="/finalizar" method="POST">
+
+    <!-- NOMBRE -->
+    <div class="mb-3">
+        <label class="form-label">Nombre</label>
+        <input type="text" name="nombre" class="form-control" required>
+    </div>
+
+    <!-- TIPO ENTREGA -->
+    <div class="mb-3">
+        <label class="form-label">Tipo de entrega</label>
+        <select name="tipo_entrega" id="tipo_entrega" class="form-select" required onchange="mostrarCampos()">
+            <option value="">Seleccione</option>
+            <option value="Local">Recoger en Local</option>
+            <option value="Domicilio">Domicilio</option>
+            <option value="Mesa">Servicio a la Mesa</option>
+            <option value="Barra">Servicio en Barra</option>
+            <option value="Para llevar">Para Llevar</option>
+        </select>
+    </div>
+
+    <!-- DIRECCION -->
+    <div class="mb-3" id="campo_direccion" style="display:none;">
+        <label class="form-label">Dirección</label>
+        <input type="text" name="direccion" class="form-control">
+    </div>
+
+    <!-- MESA -->
+    <div class="mb-3" id="campo_mesa" style="display:none;">
+        <label class="form-label">Número de Mesa</label>
+        <input type="text" name="mesa" class="form-control">
+    </div>
+
+    <!-- METODO PAGO -->
+    <div class="mb-3">
+        <label class="form-label">Método de Pago</label>
+        <select name="metodo_pago" id="metodo_pago" class="form-select" required onchange="mostrarNequi()">
+            <option value="">Seleccione</option>
+            <option value="Efectivo">Efectivo</option>
+            <option value="Nequi">Nequi</option>
+        </select>
+    </div>
+
+    <!-- INFO NEQUI -->
+    <div id="info_nequi" style="display:none;" class="alert alert-info">
+        Transferir a:<br>
+        <strong>3157319653</strong><br>
+        A nombre de: <strong>Sonia Mellizo</strong>
+    </div>
+
+    <button type="submit" class="btn btn-success w-100 mb-3">
+        Confirmar Pedido
+    </button>
+
+    <a href="/" class="btn btn-secondary w-100">
+        Seguir Comprando
+    </a>
+
+</form>
 
 {% else %}
-<p class="text-center">El carrito está vacío.</p>
+<p>No hay productos en el carrito.</p>
 {% endif %}
+
+<script>
+function mostrarCampos() {
+    var tipo = document.getElementById("tipo_entrega").value;
+    var direccion = document.getElementById("campo_direccion");
+    var mesa = document.getElementById("campo_mesa");
+
+    direccion.style.display = "none";
+    mesa.style.display = "none";
+
+    if (tipo === "Domicilio") {
+        direccion.style.display = "block";
+    }
+
+    if (tipo === "Mesa") {
+        mesa.style.display = "block";
+    }
+}
+
+function mostrarNequi() {
+    var metodo = document.getElementById("metodo_pago").value;
+    var info = document.getElementById("info_nequi");
+
+    if (metodo === "Nequi") {
+        info.style.display = "block";
+    } else {
+        info.style.display = "none";
+    }
+}
+</script>
 
 {% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="mb-4">🧾 Resumen de tu Compra</h2>
+
+<div class="card p-4 shadow">
+
+    <h4>👤 Datos del Cliente</h4>
+    <p><strong>Nombre:</strong> {{ pedido.nombre }}</p>
+    <p><strong>Tipo de Entrega:</strong> {{ pedido.tipo_entrega }}</p>
+
+    {% if pedido.tipo_entrega == "Domicilio" %}
+        <p><strong>Dirección:</strong> {{ pedido.direccion }}</p>
+    {% endif %}
+
+    {% if pedido.tipo_entrega == "Mesa" %}
+        <p><strong>Mesa:</strong> {{ pedido.mesa }}</p>
+    {% endif %}
+
+    <hr>
+
+    <h4>🛒 Productos Comprados</h4>
+
+    {% if carrito %}
+        <ul class="list-group mb-3">
+            {% for item in carrito %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>
+                        <strong>{{ item.CATEGORIA }}</strong> →
+                        {{ item.DESCRIPCION }}
+                    </span>
+                    <span>$ {{ "{:,.0f}".format(item.PRECIO) }}</span>
+                </li>
+            {% endfor %}
+        </ul>
+
+        <h4 class="text-end">
+            Total Pagado: $ {{ "{:,.0f}".format(total) }}
+        </h4>
+    {% else %}
+        <p>No hay productos en el pedido.</p>
+    {% endif %}
+
+    <hr>
+
+    <h4>💳 Método de Pago</h4>
+    <p><strong>{{ pedido.metodo_pago }}</strong></p>
+
+    {% if pedido.metodo_pago == "Nequi" %}
+        <div class="alert alert-info">
+            Transferir a:<br>
+            <strong>3157319653</strong><br>
+            A nombre de: <strong>Sonia Mellizo</strong>
+        </div>
+    {% endif %}
+
+    <div class="text-center mt-4">
+        <a href="/limpiar" class="btn btn-primary">
+            Nuevo Pedido
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}

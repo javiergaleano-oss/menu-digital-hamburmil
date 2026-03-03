@@ -3,11 +3,8 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey"  # Necesario para usar session
+app.secret_key = "supersecretkey"
 
-# ==============================
-# CONFIGURACIÓN
-# ==============================
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "BASE DE DATOS MENU COMIDAS RAPIDAS.csv")
 
@@ -32,19 +29,32 @@ def cargar_menu():
 
 
 # ==============================
-# PAGINA PRINCIPAL (CATEGORIAS)
+# CONTEXTO GLOBAL (CARRITO)
+# ==============================
+@app.context_processor
+def carrito_global():
+    carrito = session.get("carrito", [])
+    total = sum(item["PRECIO"] for item in carrito)
+    cantidad = len(carrito)
+
+    return dict(
+        carrito_cantidad=cantidad,
+        carrito_total=total
+    )
+
+
+# ==============================
+# PAGINA PRINCIPAL
 # ==============================
 @app.route("/")
 def index():
     menu = cargar_menu()
-
     categorias = sorted(menu["CATEGORIA"].dropna().unique())
-
     return render_template("categorias.html", categorias=categorias)
 
 
 # ==============================
-# VER PRODUCTOS POR CATEGORIA
+# VER PRODUCTOS
 # ==============================
 @app.route("/categoria/<nombre>")
 def ver_categoria(nombre):
@@ -67,6 +77,7 @@ def agregar():
     referencia = request.form.get("referencia")
     descripcion = request.form.get("descripcion")
     precio = float(request.form.get("precio"))
+    categoria = request.form.get("categoria")
 
     if "carrito" not in session:
         session["carrito"] = []
@@ -76,7 +87,8 @@ def agregar():
     carrito.append({
         "REFERENCIA": referencia,
         "DESCRIPCION": descripcion,
-        "PRECIO": precio
+        "PRECIO": precio,
+        "CATEGORIA": categoria
     })
 
     session["carrito"] = carrito
@@ -89,7 +101,6 @@ def agregar():
 # ==============================
 @app.route("/carrito")
 def ver_carrito():
-
     carrito = session.get("carrito", [])
     total = sum(item["PRECIO"] for item in carrito)
 
@@ -101,13 +112,45 @@ def ver_carrito():
 
 
 # ==============================
-# LIMPIAR CARRITO
+# FINALIZAR PEDIDO
 # ==============================
+@app.route("/finalizar", methods=["POST"])
+def finalizar():
+
+    nombre = request.form.get("nombre")
+    tipo_entrega = request.form.get("tipo_entrega")
+    direccion = request.form.get("direccion")
+    mesa = request.form.get("mesa")
+    metodo_pago = request.form.get("metodo_pago")
+
+    carrito = session.get("carrito", [])
+    total = sum(item["PRECIO"] for item in carrito)
+
+    pedido = {
+        "nombre": nombre,
+        "tipo_entrega": tipo_entrega,
+        "direccion": direccion,
+        "mesa": mesa,
+        "metodo_pago": metodo_pago
+    }
+
+    session["pedido"] = pedido
+
+    return render_template(
+        "confirmacion.html",
+        pedido=pedido,
+        carrito=carrito,
+        total=total
+    )
 
 
+# ==============================
+# LIMPIAR
+# ==============================
 @app.route("/limpiar")
 def limpiar():
     session.pop("carrito", None)
+    session.pop("pedido", None)
     return redirect(url_for("index"))
 
 
