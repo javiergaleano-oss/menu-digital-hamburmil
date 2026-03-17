@@ -13,10 +13,12 @@
     <style>
         body {
             background-color: #f8f9fa;
+            overflow-x: hidden; /* 🔥 evita desbordamiento */
         }
 
         .card {
             border-radius: 15px;
+            word-wrap: break-word; /* 🔥 ajusta texto largo */
         }
 
         .btn {
@@ -36,9 +38,33 @@
             text-align: center;
         }
 
+        h5, p {
+            word-break: break-word; /* 🔥 evita que textos se salgan */
+        }
+
         @media (max-width: 768px) {
             .card {
                 margin-bottom: 15px;
+            }
+        }
+
+        /* 🔥 ajuste fino para celulares */
+        @media (max-width: 576px) {
+            h2 {
+                font-size: 20px;
+            }
+
+            h5 {
+                font-size: 16px;
+            }
+
+            p {
+                font-size: 14px;
+            }
+
+            .btn {
+                font-size: 14px;
+                padding: 10px;
             }
         }
     </style>
@@ -47,7 +73,7 @@
 <body>
 
 <!-- BARRA SUPERIOR FIJA -->
-<div class="navbar-carrito bg-dark text-white p-3 d-flex justify-content-between align-items-center">
+<div class="navbar-carrito bg-dark text-white p-3 d-flex justify-content-between align-items-center flex-wrap">
 
     <div>
         🛒 {{ carrito_cantidad }} productos
