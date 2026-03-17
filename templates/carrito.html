@@ -7,15 +7,27 @@
 
 <ul class="list-group mb-3">
     {% for item in carrito %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-                <strong>{{ item.CATEGORIA }}</strong><br>
-                {{ item.DESCRIPCION }}
-            </div>
-            <span class="fw-bold text-success">
-                $ {{ "{:,.0f}".format(item.PRECIO) }}
-            </span>
-        </li>
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+            <strong>{{ item.CATEGORIA }}</strong><br>
+            {{ item.DESCRIPCION }}<br>
+
+            <!-- SOLO SALCHIPAPAS -->
+            {% if item.CATEGORIA|lower == "salchipapa" and item.SALSAS %}
+            <small class="text-muted">Salsas: {{ item.SALSAS }}</small><br>
+            {% endif %}
+
+            <!-- SOLO PERROS Y HAMBURGUESAS -->
+            {% if (item.CATEGORIA|lower == "perros calientes" or item.CATEGORIA|lower == "hamburguesa") and item.EXTRAS %}
+            <small class="text-muted">Extras: {{ item.EXTRAS }}</small>
+            {% endif %}
+
+        </div>
+
+        <span class="fw-bold text-success">
+            $ {{ "{:,.0f}".format(item.PRECIO) }}
+        </span>
+    </li>
     {% endfor %}
 </ul>
 
@@ -29,13 +41,11 @@
 
 <form action="/finalizar" method="POST">
 
-    <!-- NOMBRE -->
     <div class="mb-3">
         <label class="form-label">Nombre</label>
         <input type="text" name="nombre" class="form-control" required>
     </div>
 
-    <!-- TIPO ENTREGA -->
     <div class="mb-3">
         <label class="form-label">Tipo de entrega</label>
         <select name="tipo_entrega" id="tipo_entrega" class="form-select" required onchange="mostrarCampos()">
@@ -48,19 +58,16 @@
         </select>
     </div>
 
-    <!-- DIRECCION -->
     <div class="mb-3" id="campo_direccion" style="display:none;">
         <label class="form-label">Dirección</label>
         <input type="text" name="direccion" class="form-control">
     </div>
 
-    <!-- MESA -->
     <div class="mb-3" id="campo_mesa" style="display:none;">
         <label class="form-label">Número de Mesa</label>
         <input type="text" name="mesa" class="form-control">
     </div>
 
-    <!-- METODO PAGO -->
     <div class="mb-3">
         <label class="form-label">Método de Pago</label>
         <select name="metodo_pago" id="metodo_pago" class="form-select" required onchange="mostrarNequi()">
@@ -70,7 +77,6 @@
         </select>
     </div>
 
-    <!-- INFO NEQUI -->
     <div id="info_nequi" style="display:none;" class="alert alert-info">
         Transferir a:<br>
         <strong>3157319653</strong><br>
@@ -100,24 +106,15 @@ function mostrarCampos() {
     direccion.style.display = "none";
     mesa.style.display = "none";
 
-    if (tipo === "Domicilio") {
-        direccion.style.display = "block";
-    }
-
-    if (tipo === "Mesa") {
-        mesa.style.display = "block";
-    }
+    if (tipo === "Domicilio") direccion.style.display = "block";
+    if (tipo === "Mesa") mesa.style.display = "block";
 }
 
 function mostrarNequi() {
     var metodo = document.getElementById("metodo_pago").value;
     var info = document.getElementById("info_nequi");
 
-    if (metodo === "Nequi") {
-        info.style.display = "block";
-    } else {
-        info.style.display = "none";
-    }
+    info.style.display = (metodo === "Nequi") ? "block" : "none";
 }
 </script>
 

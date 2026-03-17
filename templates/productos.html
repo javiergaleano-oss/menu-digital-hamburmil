@@ -6,30 +6,66 @@
 <div class="row">
 
     {% for producto in productos %}
-        <div class="col-12 col-md-6 col-lg-4 mb-4">
+    <div class="col-12 col-md-6 col-lg-4 mb-4">
 
-            <div class="card shadow p-3 h-100">
+        <div class="card shadow p-3 h-100">
 
-                <h5 class="fw-bold">{{ producto.DESCRIPCION }}</h5>
+            <h5 class="fw-bold">{{ producto.DESCRIPCION }}</h5>
 
-                <p class="fs-5 text-success">
-                    $ {{ "{:,.0f}".format(producto.PRECIO) }}
-                </p>
+            <p class="fs-5 text-success">
+                $ {{ "{:,.0f}".format(producto.PRECIO) }}
+            </p>
 
-                <form action="/agregar" method="POST">
-                    <input type="hidden" name="referencia" value="{{ producto.REFERENCIA }}">
-                    <input type="hidden" name="descripcion" value="{{ producto.DESCRIPCION }}">
-                    <input type="hidden" name="precio" value="{{ producto.PRECIO }}">
-                    <input type="hidden" name="categoria" value="{{ categoria }}">
+            <form action="/agregar" method="POST">
 
-                    <button type="submit" class="btn btn-primary w-100">
-                        Agregar al pedido
-                    </button>
-                </form>
+                <input type="hidden" name="referencia" value="{{ producto.REFERENCIA }}">
+                <input type="hidden" name="descripcion" value="{{ producto.DESCRIPCION }}">
+                <input type="hidden" name="precio" value="{{ producto.PRECIO }}">
+                <input type="hidden" name="categoria" value="{{ producto.CATEGORIA }}">
 
-            </div>
+                <!-- SALCHIPAPA -->
+                {% if categoria|lower == "salchipapa" %}
+                <div class="mb-2">
+                    <label class="fw-bold">Elige tus salsas:</label><br>
+
+                    <input type="checkbox" name="salsas" value="Roja"> Roja<br>
+                    <input type="checkbox" name="salsas" value="Rosada"> Rosada<br>
+                    <input type="checkbox" name="salsas" value="Ajo de la casa"> Ajo de la casa<br>
+                    <input type="checkbox" name="salsas" value="Piña"> Piña<br>
+                    <input type="checkbox" name="salsas" value="Mostaza"> Mostaza<br>
+                </div>
+                {% endif %}
+
+                <!-- PERROS Y HAMBURGUESAS -->
+                {% if categoria|lower == "perros calientes" or categoria|lower == "hamburguesa" %}
+                <div class="mb-2">
+                    <label class="fw-bold">Personaliza tu producto:</label><br>
+
+                    <input type="checkbox" name="extras" value="Con salsa de piña">
+                    Con salsa de piña<br>
+
+                    <input type="checkbox" name="extras" value="Sin cebolla">
+                    Sin cebolla<br>
+
+                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta">
+                    Cambiar queso por tocineta<br>
+
+                    <input type="checkbox" name="extras" value="Cambiar tocineta por queso">
+                    Cambiar tocineta por queso<br>
+
+                                        
+                </div>
+                {% endif %}
+
+                <button type="submit" class="btn btn-primary w-100">
+                    Agregar al pedido
+                </button>
+
+            </form>
 
         </div>
+
+    </div>
     {% endfor %}
 
 </div>

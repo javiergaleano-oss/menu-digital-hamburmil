@@ -29,7 +29,7 @@ def cargar_menu():
 
 
 # ==============================
-# CONTEXTO GLOBAL (CARRITO)
+# CONTEXTO GLOBAL
 # ==============================
 @app.context_processor
 def carrito_global():
@@ -37,14 +37,11 @@ def carrito_global():
     total = sum(item["PRECIO"] for item in carrito)
     cantidad = len(carrito)
 
-    return dict(
-        carrito_cantidad=cantidad,
-        carrito_total=total
-    )
+    return dict(carrito_cantidad=cantidad, carrito_total=total)
 
 
 # ==============================
-# PAGINA PRINCIPAL
+# HOME
 # ==============================
 @app.route("/")
 def index():
@@ -54,7 +51,7 @@ def index():
 
 
 # ==============================
-# VER PRODUCTOS
+# VER CATEGORIA
 # ==============================
 @app.route("/categoria/<nombre>")
 def ver_categoria(nombre):
@@ -79,6 +76,9 @@ def agregar():
     precio = float(request.form.get("precio"))
     categoria = request.form.get("categoria")
 
+    salsas = request.form.getlist("salsas")
+    extras = request.form.getlist("extras")
+
     if "carrito" not in session:
         session["carrito"] = []
 
@@ -88,7 +88,9 @@ def agregar():
         "REFERENCIA": referencia,
         "DESCRIPCION": descripcion,
         "PRECIO": precio,
-        "CATEGORIA": categoria
+        "CATEGORIA": categoria,
+        "SALSAS": ", ".join(salsas) if salsas else "",
+        "EXTRAS": ", ".join(extras) if extras else ""
     })
 
     session["carrito"] = carrito
@@ -112,7 +114,7 @@ def ver_carrito():
 
 
 # ==============================
-# FINALIZAR PEDIDO
+# FINALIZAR
 # ==============================
 @app.route("/finalizar", methods=["POST"])
 def finalizar():
@@ -155,8 +157,7 @@ def limpiar():
 
 
 # ==============================
-# EJECUCION
+# RUN
 # ==============================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
