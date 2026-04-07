@@ -25,6 +25,12 @@
                 <input type="hidden" name="precio" value="{{ producto.PRECIO }}">
                 <input type="hidden" name="categoria" value="{{ producto.CATEGORIA }}">
 
+                <!-- ✅ NUEVO: CANTIDAD -->
+                <div class="mb-2">
+                    <label class="fw-bold">Cantidad:</label>
+                    <input type="number" name="cantidad" value="1" min="1" class="form-control">
+                </div>
+
                 <!-- SALCHIPAPA -->
                 {% if categoria|lower == "salchipapa" %}
                 <div class="mb-2">
@@ -35,18 +41,12 @@
                     <input type="checkbox" name="salsas" value="Ajo de la casa"> Ajo de la casa<br>
                     <input type="checkbox" name="salsas" value="Piña"> Piña<br>
                     <input type="checkbox" name="salsas" value="Mostaza"> Mostaza<br>
-                    <input type="checkbox" name="extras" value="Cambiar Queso por Tocineta">
-                    Cambiar Queso por Tocineta<br>
-                    <input type="checkbox" name="extras" value="Cambiar Tocineta por Queso">
-                    Cambiar Tocineta por Queso<br>
-                    <input type="checkbox" name="extras" value="Cambiar Pollo por Carne">
-                    Cambiar Pollo por Carne<br>
-                    <input type="checkbox" name="extras" value="Cambiar Carne por Pollo">
-                    Cambiar Carne por Pollo<br>
-                    <input type="checkbox" name="extras" value="Sin ripio">
-                    Sin ripio<br>
 
-
+                    <input type="checkbox" name="extras" value="Cambiar Queso por Tocineta"> Cambiar Queso por Tocineta<br>
+                    <input type="checkbox" name="extras" value="Cambiar Tocineta por Queso"> Cambiar Tocineta por Queso<br>
+                    <input type="checkbox" name="extras" value="Cambiar Pollo por Carne"> Cambiar Pollo por Carne<br>
+                    <input type="checkbox" name="extras" value="Cambiar Carne por Pollo"> Cambiar Carne por Pollo<br>
+                    <input type="checkbox" name="extras" value="Sin ripio"> Sin ripio<br>
                 </div>
                 {% endif %}
 
@@ -55,33 +55,15 @@
                 <div class="mb-2">
                     <label class="fw-bold">Personaliza tu producto:</label><br>
 
-                    <input type="checkbox" name="extras" value="Con salsa de piña">
-                    Con salsa de piña<br>
-
-                    <input type="checkbox" name="extras" value="Sin mostaza">
-                    Sin mostaza<br>
-
-                    <input type="checkbox" name="extras" value="Sin ajo">
-                    Sin ajo<br>
-
-                    <input type="checkbox" name="extras" value="Sin roja">
-                    Sin roja<br>
-
-                    <input type="checkbox" name="extras" value="Sin salsas">
-                    Sin salsas<br>
-
-                    <input type="checkbox" name="extras" value="Sin ripio">
-                    Sin ripio<br>
-
-                    <input type="checkbox" name="extras" value="Sin cebolla">
-                    Sin cebolla<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta">
-                    Cambiar queso por tocineta<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar tocineta por queso">
-                    Cambiar tocineta por queso<br>
-
+                    <input type="checkbox" name="extras" value="Con salsa de piña"> Con salsa de piña<br>
+                    <input type="checkbox" name="extras" value="Sin mostaza"> Sin mostaza<br>
+                    <input type="checkbox" name="extras" value="Sin ajo"> Sin ajo<br>
+                    <input type="checkbox" name="extras" value="Sin roja"> Sin roja<br>
+                    <input type="checkbox" name="extras" value="Sin salsas"> Sin salsas<br>
+                    <input type="checkbox" name="extras" value="Sin ripio"> Sin ripio<br>
+                    <input type="checkbox" name="extras" value="Sin cebolla"> Sin cebolla<br>
+                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta"> Cambiar queso por tocineta<br>
+                    <input type="checkbox" name="extras" value="Cambiar tocineta por queso"> Cambiar tocineta por queso<br>
                 </div>
                 {% endif %}
 
@@ -90,83 +72,37 @@
                 <div class="mb-2">
                     <label class="fw-bold">Personaliza tu producto:</label><br>
 
-                    <input type="checkbox" name="extras" value="Con salsa de piña">
-                    Con salsa de piña<br>
-
-                    <input type="checkbox" name="extras" value="Sin Tomate">
-                    Sin Tomate<br>
-
-                    <input type="checkbox" name="extras" value="Sin Lechuga">
-                    Sin Lechuga<br>
-
-                    <input type="checkbox" name="extras" value="Sin Verduras">
-                    Sin Verduras<br>
-
-                    <input type="checkbox" name="extras" value="Salsa Roja">
-                    Salsa Roja<br>
-
-                    <input type="checkbox" name="extras" value="Salsa Rosada">
-                    Salsa Rosada<br>
-
-                    <input type="checkbox" name="extras" value="Salsa Mostaza">
-                    Salsa Mostaza<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta">
-                    Cambiar queso por tocineta<br>
-
-                     <input type="checkbox" name="extras" value="Sin Jamon">
-                    Sin Jamon<br>
-
+                    <input type="checkbox" name="extras" value="Con salsa de piña"> Con salsa de piña<br>
+                    <input type="checkbox" name="extras" value="Sin Tomate"> Sin Tomate<br>
+                    <input type="checkbox" name="extras" value="Sin Lechuga"> Sin Lechuga<br>
+                    <input type="checkbox" name="extras" value="Sin Verduras"> Sin Verduras<br>
+                    <input type="checkbox" name="extras" value="Salsa Roja"> Salsa Roja<br>
+                    <input type="checkbox" name="extras" value="Salsa Rosada"> Salsa Rosada<br>
+                    <input type="checkbox" name="extras" value="Salsa Mostaza"> Salsa Mostaza<br>
+                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta"> Cambiar queso por tocineta<br>
+                    <input type="checkbox" name="extras" value="Sin Jamon"> Sin Jamon<br>
                 </div>
                 {% endif %}
 
-                 <!-- HAMBURGUESAS -->
+                <!-- HAMBURGUESAS -->
                 {% if categoria|lower == "hamburguesa" %}
                 <div class="mb-2">
                     <label class="fw-bold">Personaliza tu producto:</label><br>
 
-                    <input type="checkbox" name="extras" value="Con salsa de piña">
-                    Con salsa de piña<br>
-
-                    <input type="checkbox" name="extras" value="Sin mostaza">
-                    Sin mostaza<br>
-
-                    <input type="checkbox" name="extras" value="Sin roja">
-                    Sin roja<br>
-
-                    <input type="checkbox" name="extras" value="Sin ajo">
-                    Sin ajo<br>
-
-                    <input type="checkbox" name="extras" value="Sin salsas">
-                    Sin salsas<br>
-
-                    <input type="checkbox" name="extras" value="Sin cebolla">
-                    Sin cebolla<br>
-
-                    <input type="checkbox" name="extras" value="Sin tomate verdura">
-                    Sin tomate verdura<br>
-
-                    <input type="checkbox" name="extras" value="Sin lechuga">
-                    Sin lechuga<br>
-
-                    <input type="checkbox" name="extras" value="Sin verduras">
-                    Sin verduras<br>
-
-                    <input type="checkbox" name="extras" value="Sin ripio">
-                    Sin ripio<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta">
-                    Cambiar queso por tocineta<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar tocineta por queso">
-                    Cambiar tocineta por queso<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar Carne por Pollo">
-                    Cambiar Carne por Pollo<br>
-
-                    <input type="checkbox" name="extras" value="Cambiar Pollo por Carne">
-                    Cambiar Pollo por Carne<br>
-
+                    <input type="checkbox" name="extras" value="Con salsa de piña"> Con salsa de piña<br>
+                    <input type="checkbox" name="extras" value="Sin mostaza"> Sin mostaza<br>
+                    <input type="checkbox" name="extras" value="Sin roja"> Sin roja<br>
+                    <input type="checkbox" name="extras" value="Sin ajo"> Sin ajo<br>
+                    <input type="checkbox" name="extras" value="Sin salsas"> Sin salsas<br>
+                    <input type="checkbox" name="extras" value="Sin cebolla"> Sin cebolla<br>
+                    <input type="checkbox" name="extras" value="Sin tomate verdura"> Sin tomate verdura<br>
+                    <input type="checkbox" name="extras" value="Sin lechuga"> Sin lechuga<br>
+                    <input type="checkbox" name="extras" value="Sin verduras"> Sin verduras<br>
+                    <input type="checkbox" name="extras" value="Sin ripio"> Sin ripio<br>
+                    <input type="checkbox" name="extras" value="Cambiar queso por tocineta"> Cambiar queso por tocineta<br>
+                    <input type="checkbox" name="extras" value="Cambiar tocineta por queso"> Cambiar tocineta por queso<br>
+                    <input type="checkbox" name="extras" value="Cambiar Carne por Pollo"> Cambiar Carne por Pollo<br>
+                    <input type="checkbox" name="extras" value="Cambiar Pollo por Carne"> Cambiar Pollo por Carne<br>
                 </div>
                 {% endif %}
 

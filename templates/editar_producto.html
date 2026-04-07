@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h3>Editar Producto</h3>
+
+<form action="{{ url_for('actualizar', index=index) }}" method="POST">
+
+<h5>{{ item.DESCRIPCION }}</h5>
+
+<label>Salsas:</label><br>
+<input type="checkbox" name="salsas" value="Roja"> Roja<br>
+<input type="checkbox" name="salsas" value="Rosada"> Rosada<br>
+<input type="checkbox" name="salsas" value="Ajo de la casa"> Ajo de la casa<br>
+<input type="checkbox" name="salsas" value="Piña"> Piña<br>
+<input type="checkbox" name="salsas" value="Mostaza"> Mostaza<br>
+<input type="checkbox" name="salsas" value="Sin salsas"> Sin salsas<br>
+<br>
+
+<label>Extras:</label><br>
+<input type="checkbox" name="extras" value="Sin cebolla"> Sin cebolla<br>
+<input type="checkbox" name="extras" value="Sin ripio"> Sin ripio<br>
+<input type="checkbox" name="extras" value="Sin tomate"> Sin tomate<br>
+<input type="checkbox" name="extras" value="Sin lechuga"> Sin lechuga<br>
+<input type="checkbox" name="extras" value="Sin verduras"> Sin verduras<br>
+<input type="checkbox" name="extras" value="Sin jamon"> Sin jamon<br>
+<br>
+
+<label>Cambios:</label><br>
+<input type="checkbox" name="cambios" value="Cambiar Queso por Tocineta"> Cambiar Queso por Tocineta<br>
+<input type="checkbox" name="cambios" value="Cambiar Tocineta por Queso"> Cambiar Tocineta por Queso<br>
+<input type="checkbox" name="cambios" value="Cambiar Carne por Pollo"> Cambiar Carne por Pollo<br>
+<input type="checkbox" name="cambios" value="Cambiar Pollo por Carne"> Cambiar Pollo por Carne<br>
+<br>
+
+<button type="submit">Guardar</button>
+
+</form>
+
+{% endblock %}
