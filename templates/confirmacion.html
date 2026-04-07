@@ -1,3 +1,4 @@
+<h4>Pedido #{{ pedido.numero }}</h4>
 {% extends "base.html" %}
 {% block content %}
 
@@ -26,8 +27,11 @@
             {% for item in carrito %}
                 <li class="list-group-item d-flex justify-content-between">
                     <span>
-                        <strong>{{ item.CATEGORIA }}</strong> →
-                        {{ item.DESCRIPCION }}
+                        <strong>{{ item.CATEGORIA }}</strong> →<br>
+
+                        <!-- 🔥 CAMBIO CLAVE -->
+                        <strong>{{ item.REFERENCIA }}</strong> 
+
                     </span>
                     <span>$ {{ "{:,.0f}".format(item.PRECIO) }}</span>
                 </li>
@@ -58,8 +62,17 @@
         <a href="/limpiar" class="btn btn-primary">
             Nuevo Pedido
         </a>
+
+        <!-- 🖨️ BOTÓN IMPRIMIR -->
+        <a href="{{ url_for('ticket') }}" target="_blank" class="btn btn-dark mt-2">
+            Imprimir Ticket
+        </a>
     </div>
 
 </div>
 
 {% endblock %}
+
+<a href="/descargar_excel" class="btn btn-success w-100 mt-2">
+    Descargar Excel 📊
+</a>

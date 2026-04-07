@@ -1,3 +1,11 @@
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="alert alert-danger">
+      {{ messages[0] }}
+    </div>
+  {% endif %}
+{% endwith %}
+
 {% extends "base.html" %}
 {% block content %}
 
@@ -8,31 +16,37 @@
 <ul class="list-group mb-3">
     {% for item in carrito %}
     <li class="list-group-item d-flex justify-content-between align-items-center">
+        
         <div>
             <strong>{{ item.CATEGORIA }}</strong><br>
             {{ item.DESCRIPCION }}<br>
 
-            <!-- SOLO SALCHIPAPAS -->
             {% if item.CATEGORIA|lower == "salchipapa" and item.SALSAS %}
             <small class="text-muted">Salsas: {{ item.SALSAS }}</small><br>
             {% endif %}
 
-            <!-- SOLO PERROS Y HAMBURGUESAS -->
             {% if (item.CATEGORIA|lower == "perros calientes" or item.CATEGORIA|lower == "hamburguesa") and item.EXTRAS %}
             <small class="text-muted">Extras: {{ item.EXTRAS }}</small>
             {% endif %}
 
+            <br>
+            <a href="{{ url_for('eliminar', index=loop.index0) }}"
+               onclick="return confirm('¿Eliminar este producto?')"
+               class="btn btn-danger btn-sm mt-2">
+               Eliminar
+            </a>
         </div>
 
         <span class="fw-bold text-success">
             $ {{ "{:,.0f}".format(item.PRECIO) }}
         </span>
+
     </li>
     {% endfor %}
 </ul>
 
 <h4 class="text-end mb-4">
-    Total: $ {{ "{:,.0f}".format(total) }}
+    Total: $ <span id="total">{{ "{:,.0f}".format(total) }}</span>
 </h4>
 
 <hr>
@@ -40,6 +54,8 @@
 <h4 class="mb-3">Finalizar Pedido</h4>
 
 <form action="/finalizar" method="POST">
+
+    <input type="hidden" id="total_hidden" value="{{ total }}">
 
     <div class="mb-3">
         <label class="form-label">Nombre</label>
@@ -53,8 +69,6 @@
             <option value="Local">Recoger en Local</option>
             <option value="Domicilio">Domicilio</option>
             <option value="Mesa">Servicio a la Mesa</option>
-            <option value="Barra">Servicio en Barra</option>
-            <option value="Para llevar">Para Llevar</option>
         </select>
     </div>
 
@@ -64,23 +78,27 @@
     </div>
 
     <div class="mb-3" id="campo_mesa" style="display:none;">
-        <label class="form-label">Número de Mesa</label>
+        <label class="form-label">Mesa</label>
         <input type="text" name="mesa" class="form-control">
     </div>
 
+    <hr>
+
+    <h5>💳 Pagos</h5>
+
     <div class="mb-3">
-        <label class="form-label">Método de Pago</label>
-        <select name="metodo_pago" id="metodo_pago" class="form-select" required onchange="mostrarNequi()">
-            <option value="">Seleccione</option>
-            <option value="Efectivo">Efectivo</option>
-            <option value="Nequi">Nequi</option>
-        </select>
+        <label>Efectivo</label>
+        <input type="number" id="efectivo" name="pago_efectivo" class="form-control" value="0" oninput="calcularPago()">
     </div>
 
-    <div id="info_nequi" style="display:none;" class="alert alert-info">
-        Transferir a:<br>
-        <strong>3157319653</strong><br>
-        A nombre de: <strong>Sonia Mellizo</strong>
+    <div class="mb-3">
+        <label>Nequi</label>
+        <input type="number" id="nequi" name="pago_nequi" class="form-control" value="0" oninput="calcularPago()">
+    </div>
+
+    <div class="alert alert-warning">
+        Faltante: $ <span id="faltante">0</span><br>
+        Cambio: $ <span id="cambio">0</span>
     </div>
 
     <button type="submit" class="btn btn-success w-100 mb-3">
@@ -99,22 +117,28 @@
 
 <script>
 function mostrarCampos() {
-    var tipo = document.getElementById("tipo_entrega").value;
-    var direccion = document.getElementById("campo_direccion");
-    var mesa = document.getElementById("campo_mesa");
-
-    direccion.style.display = "none";
-    mesa.style.display = "none";
-
-    if (tipo === "Domicilio") direccion.style.display = "block";
-    if (tipo === "Mesa") mesa.style.display = "block";
+    let tipo = document.getElementById("tipo_entrega").value;
+    document.getElementById("campo_direccion").style.display = (tipo === "Domicilio") ? "block" : "none";
+    document.getElementById("campo_mesa").style.display = (tipo === "Mesa") ? "block" : "none";
 }
 
-function mostrarNequi() {
-    var metodo = document.getElementById("metodo_pago").value;
-    var info = document.getElementById("info_nequi");
+function calcularPago() {
+    let total = parseFloat(document.getElementById("total_hidden").value);
+    let efectivo = parseFloat(document.getElementById("efectivo").value) || 0;
+    let nequi = parseFloat(document.getElementById("nequi").value) || 0;
 
-    info.style.display = (metodo === "Nequi") ? "block" : "none";
+    let pagado = efectivo + nequi;
+
+    let faltante = total - pagado;
+    let cambio = 0;
+
+    if (faltante < 0) {
+        cambio = Math.abs(faltante);
+        faltante = 0;
+    }
+
+    document.getElementById("faltante").innerText = faltante.toLocaleString();
+    document.getElementById("cambio").innerText = cambio.toLocaleString();
 }
 </script>
 

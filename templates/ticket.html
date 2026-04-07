@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Ticket</title>
+    <style>
+        body { font-family: monospace; max-width: 300px; margin:auto; }
+        hr { border: 1px dashed black; }
+        .total { text-align:right; font-weight:bold; }
+    </style>
+</head>
+<body>
+
+<h3>🧾 PEDIDO #{{ pedido.numero }}</h3>
+
+<p>Cliente: {{ pedido.nombre }}</p>
+<p>Entrega: {{ pedido.tipo_entrega }}</p>
+
+{% if pedido.tipo_entrega == "Domicilio" %}
+<p>Dir: {{ pedido.direccion }}</p>
+{% endif %}
+
+{% if pedido.tipo_entrega == "Mesa" %}
+<p>Mesa: {{ pedido.mesa }}</p>
+{% endif %}
+
+<hr>
+
+{% for item in carrito %}
+<p>{{ item.REFERENCIA }} - $ {{ "{:,.0f}".format(item.PRECIO) }}</p>
+
+{% if item.SALSAS %}
+<p>  Salsas: {{ item.SALSAS }}</p>
+{% endif %}
+
+{% if item.EXTRAS %}
+<p>  Extras: {{ item.EXTRAS }}</p>
+{% endif %}
+
+{% endfor %}
+
+<hr>
+
+<p class="total">TOTAL: $ {{ "{:,.0f}".format(total) }}</p>
+
+<hr>
+
+<p>Efectivo: $ {{ "{:,.0f}".format(pedido.efectivo) }}</p>
+<p>Nequi: $ {{ "{:,.0f}".format(pedido.nequi) }}</p>
+<p>Cambio: $ {{ "{:,.0f}".format(pedido.cambio) }}</p>
+
+<hr>
+
+<p style="text-align:center;">¡Gracias!</p>
+
+<script>
+window.onload = function() { window.print(); }
+</script>
+
+</body>
+</html>
