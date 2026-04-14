@@ -1,4 +1,6 @@
-flask
-pandas
+Flask
 gunicorn
+pandas
 openpyxl
+psycopg2-binary
+SQLAlchemy
