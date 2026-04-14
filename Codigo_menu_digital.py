@@ -11,12 +11,28 @@ app.secret_key = "supersecretkey"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "BASEDEDATOSMENUCOMIDASRAPIDAS.csv")
 
+
 # ==============================
 # BASE DE DATOS (RENDER)
 # ==============================
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    DATABASE_URL = "sqlite:///local.db"  # base de datos local
+
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+
+from sqlalchemy import text  # (si no lo tienes ya)
+
+with engine.connect() as conn:
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS detalle_pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pedido_id INTEGER,
+            referencia TEXT,
+            precio REAL
+        )
+    """))
 
 
 def crear_tablas():
@@ -232,7 +248,7 @@ def finalizar():
 
     pedido = {
         "numero": generar_numero_pedido(),
-        "fecha": datetime.now().strftime("%d/%m/%Y %H:%M"),
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # 🔥 mejor formato
         "nombre": request.form.get("nombre"),
         "tipo_entrega": request.form.get("tipo_entrega"),
         "direccion": request.form.get("direccion"),
@@ -243,12 +259,45 @@ def finalizar():
         "cambio": cambio
     }
 
+    # 🔥 AQUÍ VA TODO BIEN INDENTADO
+    with engine.begin() as conn:
+        result = conn.execute(text("""
+            INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
+            VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
+        """), {
+            "numero": pedido["numero"],
+            "fecha": pedido["fecha"],
+            "nombre": pedido["nombre"],
+            "tipo_entrega": pedido["tipo_entrega"],
+            "direccion": pedido["direccion"],
+            "mesa": pedido["mesa"],
+            "efectivo": pedido["efectivo"],
+            "nequi": pedido["nequi"],
+            "total": total
+        })
+
+        pedido_id = result.lastrowid
+
+        for item in carrito:
+            conn.execute(text("""
+                INSERT INTO detalle_pedidos (pedido_id, referencia, precio)
+                VALUES (:pedido_id, :referencia, :precio)
+            """), {
+                "pedido_id": pedido_id,
+                "referencia": item["REFERENCIA"],
+                "precio": item["PRECIO"]
+            })
+
+    session["pedido"] = pedido
+
+    return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
+
     # 🔥 GUARDAR EN BASE DE DATOS
     with engine.begin() as conn:
 
         result = conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
-            VALUES (:numero, NOW(), :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
+            VALUES (:numero, CURRENT_TIMESTAMP, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
             RETURNING id;
         """), {
             "numero": pedido["numero"],
@@ -282,34 +331,66 @@ def finalizar():
 # ==============================
 # REPORTE PRO
 # ==============================
+
 @app.route("/reporte")
 def reporte():
+    import pandas as pd
+    from io import BytesIO
 
-    df_productos = pd.read_sql("""
-        SELECT referencia,
-               COUNT(*) as cantidad,
-               SUM(precio) as total
-        FROM detalle_pedido
-        GROUP BY referencia
-    """, engine)
-
+    # ==============================
+    # 1. RESUMEN POR DÍA
+    # ==============================
     resumen = pd.read_sql("""
         SELECT 
+            DATE(fecha) as fecha,
             SUM(total) as venta_total,
             SUM(efectivo) as efectivo,
             SUM(nequi) as nequi,
-            COUNT(*) FILTER (WHERE tipo_entrega = 'domicilio') as domicilios
+            
+            COUNT(CASE 
+                WHEN LOWER(tipo_entrega) LIKE '%domicilio%' 
+                THEN 1 END) as domicilios,
+
+            SUM(CASE 
+                WHEN LOWER(tipo_entrega) LIKE '%domicilio%' 
+                THEN total ELSE 0 END) as dinero_domicilios
+
         FROM pedidos
+        GROUP BY DATE(fecha)
+        ORDER BY DATE(fecha) DESC
     """, engine)
 
-    archivo = "reporte.xlsx"
+    # ==============================
+    # 2. PRODUCTOS POR DÍA
+    # ==============================
+    productos = pd.read_sql("""
+    SELECT 
+        DATE(p.fecha) as fecha,
+        d.referencia,
+        COUNT(*) as cantidad,
+        SUM(d.precio) as total
+    FROM detalle_pedidos d
+    JOIN pedidos p ON d.pedido_id = p.id
+    GROUP BY DATE(p.fecha), d.referencia
+    ORDER BY DATE(p.fecha) DESC
+""", engine)
 
-    with pd.ExcelWriter(archivo, engine="openpyxl") as writer:
-        df_productos.to_excel(writer, sheet_name="Productos", index=False)
-        resumen.to_excel(writer, sheet_name="Resumen", index=False)
+    # ==============================
+    # EXPORTAR A EXCEL
+    # ==============================
+    output = BytesIO()
 
-    return send_file(archivo, as_attachment=True)
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        resumen.to_excel(writer, index=False, sheet_name="Resumen Diario")
+        productos.to_excel(writer, index=False, sheet_name="Productos por Día")
 
+    output.seek(0)
+
+    return send_file(
+        output,
+        download_name="reporte_completo.xlsx",
+        as_attachment=True
+    )    
 
 @app.route("/ticket")
 def ticket():
@@ -327,3 +408,10 @@ def limpiar():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+
+import pandas as pd
+
+print("PRUEBA TABLA DETALLE_PEDIDOS:")
+print(pd.read_sql("SELECT * FROM detalle_pedidos", engine))    
+
