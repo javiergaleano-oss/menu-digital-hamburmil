@@ -156,7 +156,8 @@ def ver_carrito():
 def finalizar():
 
     carrito = session.get("carrito", [])
-    total = sum(item["PRECIO"] for item in carrito)
+
+    total = sum(item["PRECIO"] * item.get("CANTIDAD", 1) for item in carrito)
 
     try:
         efectivo = float(request.form.get("pago_efectivo") or 0)
@@ -173,42 +174,36 @@ def finalizar():
         "fecha": hora_colombia().strftime("%Y-%m-%d %H:%M:%S"),
         "nombre": request.form.get("nombre"),
         "tipo_entrega": request.form.get("tipo_entrega"),
-        "direccion": request.form.get("direccion"),
-        "mesa": request.form.get("mesa"),
+        "direccion": request.form.get("direccion") or "",
+        "mesa": request.form.get("mesa") or "",
         "efectivo": efectivo,
         "nequi": nequi
     }
 
     with engine.begin() as conn:
 
-        conn.execute(text("""
+        resultado = conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
+            RETURNING id
         """), {**pedido, "total": total})
 
-        pedido_id = conn.execute(text("SELECT last_insert_rowid()")).fetchone()[0]
+        pedido_id = resultado.fetchone()[0]
 
         for item in carrito:
             conn.execute(text("""
-                INSERT INTO detalle_pedidos (pedido_id, referencia, precio)
-                VALUES (:pedido_id, :referencia, :precio)
+                INSERT INTO detalle_pedidos (pedido_id, referencia, precio, cantidad)
+                VALUES (:pedido_id, :referencia, :precio, :cantidad)
             """), {
                 "pedido_id": pedido_id,
                 "referencia": item["REFERENCIA"],
-                "precio": item["PRECIO"]
+                "precio": item["PRECIO"],
+                "cantidad": item.get("CANTIDAD", 1)
             })
 
     session["pedido"] = pedido
 
     return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
-
-# ==============================
-# REPORTE (NO ROMPE)
-# ==============================
-@app.route("/reporte")
-def reporte():
-    return "Reporte funcionando correctamente"
-
 # ==============================
 # TICKET
 # ==============================
