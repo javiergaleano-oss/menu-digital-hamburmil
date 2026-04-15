@@ -170,7 +170,7 @@ def finalizar():
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
         """), {**pedido, "total": total})
 
-        pedido_id = conn.execute(text("SELECT last_insert_rowid()")).scalar()
+        pedido_id = result.fetchone()[0]
 
         for item in carrito:
             conn.execute(text("""
@@ -191,6 +191,10 @@ def finalizar():
 # ==============================
 @app.route("/ticket")
 def ticket():
+    @app.route("/reporte")
+def reporte():
+    return "Reporte funcionando (temporal)"
+
     carrito = session.get("carrito", [])
     pedido = session.get("pedido", {})
     total = sum(item["PRECIO"] for item in carrito)
@@ -201,6 +205,8 @@ def ticket():
 # ==============================
 @app.route("/ticket_texto")
 def ticket_texto():
+
+
     carrito = session.get("carrito", [])
     pedido = session.get("pedido", {})
 
