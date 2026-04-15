@@ -22,30 +22,12 @@
 Cliente: {{ pedido.nombre }}<br>
 Entrega: {{ pedido.tipo_entrega }}
 
-{% if pedido.tipo_entrega == "Domicilio" %}
-<br>Dir: {{ pedido.direccion }}
-{% endif %}
-
-{% if pedido.tipo_entrega == "Mesa" %}
-<br>Mesa: {{ pedido.mesa }}
-{% endif %}
-
 <hr>
 
-<!-- PRODUCTOS -->
 {% for item in carrito %}
 <p>
 {{ item.REFERENCIA }} ........ $ {{ "{:,.0f}".format(item.PRECIO) }}
 </p>
-
-{% if item.SALSAS %}
-<p>+ {{ item.SALSAS }}</p>
-{% endif %}
-
-{% if item.EXTRAS %}
-<p>+ {{ item.EXTRAS }}</p>
-{% endif %}
-
 {% endfor %}
 
 <hr>
@@ -54,29 +36,22 @@ Entrega: {{ pedido.tipo_entrega }}
 
 <hr>
 
-<p>Efectivo: $ {{ "{:,.0f}".format(pedido.efectivo) }}</p>
-
-{% if pedido.nequi > 0 %}
-<p>Nequi: $ {{ "{:,.0f}".format(pedido.nequi) }}</p>
-{% endif %}
-
-{% if pedido.restante > 0 %}
-<p>Faltante: $ {{ "{:,.0f}".format(pedido.restante) }}</p>
-{% endif %}
-
-{% if pedido.cambio > 0 %}
-<p>Cambio: $ {{ "{:,.0f}".format(pedido.cambio) }}</p>
-{% endif %}
-
-<hr>
-
-
 <div class="center">
     ¡Gracias por su compra!
 </div>
 
+<br><br>
+
+<a href="/ticket_texto">
+    <button style="width:100%; padding:10px; font-size:16px;">
+        🖨️ Imprimir en RawBT
+    </button>
+</a>
+
 <script>
-window.onload = function() { window.print(); }
+if (window.innerWidth > 768) {
+    window.onload = function() { window.print(); }
+}
 </script>
 
 </body>
