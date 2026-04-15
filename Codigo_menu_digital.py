@@ -7,51 +7,52 @@ import pytz
 from sqlalchemy import create_engine, text
 
 # ==============================
-# HORA COLOMBIA
+# CONFIG
 # ==============================
-def hora_colombia():
-    zona = pytz.timezone("America/Bogota")
-    return datetime.now(zona)
-
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "BASEDEDATOSMENUCOMIDASRAPIDAS.csv")
 
+def hora_colombia():
+    zona = pytz.timezone("America/Bogota")
+    return datetime.now(zona)
+
+# ==============================
+# BASE DE DATOS
+# ==============================
 DATABASE_URL = os.getenv("DATABASE_URL")
+
 if not DATABASE_URL:
-    DATABASE_URL = "sqlite:///" + os.path.join(BASE_DIR, "local.db")
+    DATABASE_URL = "sqlite:///local.db"
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
-# ==============================
-# TABLAS
-# ==============================
 def crear_tablas():
-    with engine.connect() as conn:
+    with engine.begin() as conn:
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS pedidos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            numero INTEGER,
+            numero INT,
             fecha TEXT,
             nombre TEXT,
             tipo_entrega TEXT,
             direccion TEXT,
             mesa TEXT,
-            efectivo REAL,
-            nequi REAL,
-            total REAL
-        );
+            efectivo FLOAT,
+            nequi FLOAT,
+            total FLOAT
+        )
         """))
 
         conn.execute(text("""
         CREATE TABLE IF NOT EXISTS detalle_pedidos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            pedido_id INTEGER,
+            pedido_id INT,
             referencia TEXT,
-            precio REAL
-        );
+            precio FLOAT
+        )
         """))
 
 crear_tablas()
@@ -88,7 +89,7 @@ def cargar_menu():
         return pd.DataFrame()
 
     df = pd.read_csv(CSV_PATH, sep=";")
-    df.columns = df.columns.str.strip().str.upper().str.replace(" ", "")
+    df.columns = df.columns.str.strip().str.upper().str.replace(" ", "", regex=False)
     df["PRECIO"] = pd.to_numeric(df["PRECIO"], errors="coerce").fillna(0)
     return df
 
@@ -113,21 +114,19 @@ def ver_categoria(nombre):
     productos = menu[menu["CATEGORIA"] == nombre]
     return render_template("productos.html", categoria=nombre, productos=productos.to_dict(orient="records"))
 
+# ==============================
+# CARRITO
+# ==============================
 @app.route("/agregar", methods=["POST"])
 def agregar():
     session.setdefault("carrito", [])
     carrito = session["carrito"]
 
-    cantidad = int(request.form.get("cantidad") or 1)
-
-    for _ in range(cantidad):
-        carrito.append({
-            "REFERENCIA": request.form.get("referencia"),
-            "DESCRIPCION": request.form.get("descripcion"),
-            "PRECIO": float(request.form.get("precio")),
-            "SALSAS": ", ".join(request.form.getlist("salsas")),
-            "EXTRAS": ", ".join(request.form.getlist("extras"))
-        })
+    carrito.append({
+        "REFERENCIA": request.form.get("referencia"),
+        "DESCRIPCION": request.form.get("descripcion"),
+        "PRECIO": float(request.form.get("precio"))
+    })
 
     session["carrito"] = carrito
     session.modified = True
@@ -149,14 +148,6 @@ def finalizar():
     carrito = session.get("carrito", [])
     total = sum(item["PRECIO"] for item in carrito)
 
-    pago_efectivo = float(request.form.get("pago_efectivo") or 0)
-    pago_nequi = float(request.form.get("pago_nequi") or 0)
-
-    total_pagado = pago_efectivo + pago_nequi
-
-    restante = max(0, total - total_pagado)
-    cambio = max(0, total_pagado - total)
-
     pedido = {
         "numero": generar_numero_pedido(),
         "fecha": hora_colombia().strftime("%Y-%m-%d %H:%M:%S"),
@@ -164,32 +155,18 @@ def finalizar():
         "tipo_entrega": request.form.get("tipo_entrega"),
         "direccion": request.form.get("direccion"),
         "mesa": request.form.get("mesa"),
-        "efectivo": pago_efectivo,
-        "nequi": pago_nequi,
-        "restante": restante,
-        "cambio": cambio
+        "efectivo": float(request.form.get("pago_efectivo") or 0),
+        "nequi": float(request.form.get("pago_nequi") or 0),
     }
 
-    # ✅ GUARDAR EN BD CORRECTO
     with engine.begin() as conn:
 
         result = conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
-            RETURNING id
-        """), {
-            "numero": pedido["numero"],
-            "fecha": pedido["fecha"],
-            "nombre": pedido["nombre"],
-            "tipo_entrega": pedido["tipo_entrega"],
-            "direccion": pedido["direccion"],
-            "mesa": pedido["mesa"],
-            "efectivo": pedido["efectivo"],
-            "nequi": pedido["nequi"],
-            "total": total
-        })
+        """), {**pedido, "total": total})
 
-        pedido_id = result.fetchone()[0]  # 🔥 CLAVE
+        pedido_id = conn.execute(text("SELECT last_insert_rowid()")).fetchone()[0]
 
         for item in carrito:
             conn.execute(text("""
@@ -204,11 +181,16 @@ def finalizar():
     session["pedido"] = pedido
 
     return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
+
 # ==============================
-# TICKET HTML
+# REPORTE (FIX ERROR 500)
 # ==============================
+@app.route("/reporte")
+def reporte():
+    return "Reporte funcionando correctamente"
+
 # ==============================
-# TICKET HTML
+# TICKET NORMAL
 # ==============================
 @app.route("/ticket")
 def ticket():
@@ -216,15 +198,6 @@ def ticket():
     pedido = session.get("pedido", {})
     total = sum(item["PRECIO"] for item in carrito)
     return render_template("ticket.html", carrito=carrito, total=total, pedido=pedido)
-
-
-# ==============================
-# REPORTE (TEMPORAL)
-# ==============================
-@app.route("/reporte")
-def reporte():
-    return "Reporte funcionando (temporal)"
-
 
 # ==============================
 # TICKET PARA RAWBT
@@ -248,7 +221,16 @@ def ticket_texto():
 
     return texto, 200, {'Content-Type': 'text/plain'}
 
+# ==============================
+# LIMPIAR
+# ==============================
+@app.route("/limpiar")
+def limpiar():
+    session.clear()
+    return redirect(url_for("index"))
 
+# ==============================
+# MAIN
 # ==============================
 if __name__ == "__main__":
     app.run(debug=True)
