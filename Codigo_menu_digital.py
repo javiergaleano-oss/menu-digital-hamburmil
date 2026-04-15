@@ -51,7 +51,8 @@ def crear_tablas():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             pedido_id INT,
             referencia TEXT,
-            precio FLOAT
+            precio FLOAT,
+            cantidad INT
         )
         """))
 
@@ -115,7 +116,7 @@ def ver_categoria(nombre):
     return render_template("productos.html", categoria=nombre, productos=productos.to_dict(orient="records"))
 
 # ==============================
-# AGREGAR (FIX ERROR 500)
+# AGREGAR
 # ==============================
 @app.route("/agregar", methods=["POST"])
 def agregar():
@@ -132,7 +133,8 @@ def agregar():
     carrito.append({
         "REFERENCIA": request.form.get("referencia") or "N/A",
         "DESCRIPCION": request.form.get("descripcion") or "",
-        "PRECIO": precio
+        "PRECIO": precio,
+        "CANTIDAD": int(request.form.get("cantidad") or 1)
     })
 
     session["carrito"] = carrito
@@ -146,11 +148,11 @@ def agregar():
 @app.route("/carrito")
 def ver_carrito():
     carrito = session.get("carrito", [])
-    total = sum(item["PRECIO"] for item in carrito)
+    total = sum(item["PRECIO"] * item.get("CANTIDAD", 1) for item in carrito)
     return render_template("carrito.html", carrito=carrito, total=total)
 
 # ==============================
-# FINALIZAR (FIX ERROR 500)
+# FINALIZAR
 # ==============================
 @app.route("/finalizar", methods=["POST"])
 def finalizar():
@@ -182,13 +184,12 @@ def finalizar():
 
     with engine.begin() as conn:
 
-        resultado = conn.execute(text("""
+        conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
-            RETURNING id
         """), {**pedido, "total": total})
 
-        pedido_id = resultado.fetchone()[0]
+        pedido_id = conn.execute(text("SELECT last_insert_rowid()")).scalar()
 
         for item in carrito:
             conn.execute(text("""
@@ -204,6 +205,7 @@ def finalizar():
     session["pedido"] = pedido
 
     return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
+
 # ==============================
 # TICKET
 # ==============================
@@ -211,11 +213,11 @@ def finalizar():
 def ticket():
     carrito = session.get("carrito", [])
     pedido = session.get("pedido", {})
-    total = sum(item["PRECIO"] for item in carrito)
+    total = sum(item["PRECIO"] * item.get("CANTIDAD", 1) for item in carrito)
     return render_template("ticket.html", carrito=carrito, total=total, pedido=pedido)
 
 # ==============================
-# TICKET TEXTO (RAWBT)
+# TICKET TEXTO
 # ==============================
 @app.route("/ticket_texto")
 def ticket_texto():
@@ -245,7 +247,7 @@ def limpiar():
     return redirect(url_for("index"))
 
 # ==============================
-# MAIN
+# MAIN (RENDER FIX)
 # ==============================
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
