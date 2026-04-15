@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
 import pandas as pd
 import os
 import json
@@ -115,17 +115,24 @@ def ver_categoria(nombre):
     return render_template("productos.html", categoria=nombre, productos=productos.to_dict(orient="records"))
 
 # ==============================
-# CARRITO
+# AGREGAR (FIX ERROR 500)
 # ==============================
 @app.route("/agregar", methods=["POST"])
 def agregar():
     session.setdefault("carrito", [])
     carrito = session["carrito"]
 
+    precio = request.form.get("precio")
+
+    try:
+        precio = float(precio)
+    except:
+        precio = 0
+
     carrito.append({
-        "REFERENCIA": request.form.get("referencia"),
-        "DESCRIPCION": request.form.get("descripcion"),
-        "PRECIO": float(request.form.get("precio"))
+        "REFERENCIA": request.form.get("referencia") or "N/A",
+        "DESCRIPCION": request.form.get("descripcion") or "",
+        "PRECIO": precio
     })
 
     session["carrito"] = carrito
@@ -133,6 +140,9 @@ def agregar():
 
     return redirect(url_for("ver_carrito"))
 
+# ==============================
+# CARRITO
+# ==============================
 @app.route("/carrito")
 def ver_carrito():
     carrito = session.get("carrito", [])
@@ -140,13 +150,23 @@ def ver_carrito():
     return render_template("carrito.html", carrito=carrito, total=total)
 
 # ==============================
-# FINALIZAR
+# FINALIZAR (FIX ERROR 500)
 # ==============================
 @app.route("/finalizar", methods=["POST"])
 def finalizar():
 
     carrito = session.get("carrito", [])
     total = sum(item["PRECIO"] for item in carrito)
+
+    try:
+        efectivo = float(request.form.get("pago_efectivo") or 0)
+    except:
+        efectivo = 0
+
+    try:
+        nequi = float(request.form.get("pago_nequi") or 0)
+    except:
+        nequi = 0
 
     pedido = {
         "numero": generar_numero_pedido(),
@@ -155,13 +175,13 @@ def finalizar():
         "tipo_entrega": request.form.get("tipo_entrega"),
         "direccion": request.form.get("direccion"),
         "mesa": request.form.get("mesa"),
-        "efectivo": float(request.form.get("pago_efectivo") or 0),
-        "nequi": float(request.form.get("pago_nequi") or 0),
+        "efectivo": efectivo,
+        "nequi": nequi
     }
 
     with engine.begin() as conn:
 
-        result = conn.execute(text("""
+        conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
         """), {**pedido, "total": total})
@@ -183,14 +203,14 @@ def finalizar():
     return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
 
 # ==============================
-# REPORTE (FIX ERROR 500)
+# REPORTE (NO ROMPE)
 # ==============================
 @app.route("/reporte")
 def reporte():
     return "Reporte funcionando correctamente"
 
 # ==============================
-# TICKET NORMAL
+# TICKET
 # ==============================
 @app.route("/ticket")
 def ticket():
@@ -200,7 +220,7 @@ def ticket():
     return render_template("ticket.html", carrito=carrito, total=total, pedido=pedido)
 
 # ==============================
-# TICKET PARA RAWBT
+# TICKET TEXTO (RAWBT)
 # ==============================
 @app.route("/ticket_texto")
 def ticket_texto():
