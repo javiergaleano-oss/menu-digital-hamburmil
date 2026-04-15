@@ -189,23 +189,30 @@ def finalizar():
 # ==============================
 # TICKET HTML
 # ==============================
+# ==============================
+# TICKET HTML
+# ==============================
 @app.route("/ticket")
 def ticket():
-    @app.route("/reporte")
-def reporte():
-    return "Reporte funcionando (temporal)"
-
     carrito = session.get("carrito", [])
     pedido = session.get("pedido", {})
     total = sum(item["PRECIO"] for item in carrito)
     return render_template("ticket.html", carrito=carrito, total=total, pedido=pedido)
+
+
+# ==============================
+# REPORTE (TEMPORAL)
+# ==============================
+@app.route("/reporte")
+def reporte():
+    return "Reporte funcionando (temporal)"
+
 
 # ==============================
 # TICKET PARA RAWBT
 # ==============================
 @app.route("/ticket_texto")
 def ticket_texto():
-
 
     carrito = session.get("carrito", [])
     pedido = session.get("pedido", {})
@@ -222,6 +229,7 @@ def ticket_texto():
     texto += "Gracias por su compra\n"
 
     return texto, 200, {'Content-Type': 'text/plain'}
+
 
 # ==============================
 if __name__ == "__main__":
