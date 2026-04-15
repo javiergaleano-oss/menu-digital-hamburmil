@@ -152,6 +152,11 @@ def finalizar():
     pago_efectivo = float(request.form.get("pago_efectivo") or 0)
     pago_nequi = float(request.form.get("pago_nequi") or 0)
 
+    total_pagado = pago_efectivo + pago_nequi
+
+    restante = max(0, total - total_pagado)
+    cambio = max(0, total_pagado - total)
+
     pedido = {
         "numero": generar_numero_pedido(),
         "fecha": hora_colombia().strftime("%Y-%m-%d %H:%M:%S"),
@@ -160,17 +165,31 @@ def finalizar():
         "direccion": request.form.get("direccion"),
         "mesa": request.form.get("mesa"),
         "efectivo": pago_efectivo,
-        "nequi": pago_nequi
+        "nequi": pago_nequi,
+        "restante": restante,
+        "cambio": cambio
     }
 
+    # ✅ GUARDAR EN BD CORRECTO
     with engine.begin() as conn:
 
-        conn.execute(text("""
+        result = conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
-        """), {**pedido, "total": total})
+            RETURNING id
+        """), {
+            "numero": pedido["numero"],
+            "fecha": pedido["fecha"],
+            "nombre": pedido["nombre"],
+            "tipo_entrega": pedido["tipo_entrega"],
+            "direccion": pedido["direccion"],
+            "mesa": pedido["mesa"],
+            "efectivo": pedido["efectivo"],
+            "nequi": pedido["nequi"],
+            "total": total
+        })
 
-        pedido_id = result.fetchone()[0]
+        pedido_id = result.fetchone()[0]  # 🔥 CLAVE
 
         for item in carrito:
             conn.execute(text("""
@@ -185,7 +204,6 @@ def finalizar():
     session["pedido"] = pedido
 
     return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
-
 # ==============================
 # TICKET HTML
 # ==============================
