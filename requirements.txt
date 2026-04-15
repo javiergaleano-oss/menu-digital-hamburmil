@@ -4,3 +4,7 @@ pandas
 openpyxl
 psycopg2-binary
 SQLAlchemy
+sqlalchemy
+openpyxl
+gunicorn
+pytz
