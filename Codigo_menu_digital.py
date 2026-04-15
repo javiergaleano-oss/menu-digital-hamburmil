@@ -3,66 +3,65 @@ import pandas as pd
 import os
 import json
 from datetime import datetime
+import pytz
 from sqlalchemy import create_engine, text
 
+# ==============================
+# HORA COLOMBIA
+# ==============================
+def hora_colombia():
+    zona = pytz.timezone("America/Bogota")
+    return datetime.now(zona)
+
+# ==============================
+# APP
+# ==============================
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, "BASEDEDATOSMENUCOMIDASRAPIDAS.csv")
 
-
 # ==============================
-# BASE DE DATOS (RENDER)
+# BASE DE DATOS
 # ==============================
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not DATABASE_URL:
-    DATABASE_URL = "sqlite:///local.db"  # base de datos local
+    DATABASE_URL = "sqlite:///" + os.path.join(BASE_DIR, "local.db")
+
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 
-from sqlalchemy import text  # (si no lo tienes ya)
+# ==============================
+# CREAR TABLAS (CORREGIDO)
+# ==============================
+def crear_tablas():
+    with engine.connect() as conn:
 
-with engine.connect() as conn:
-    conn.execute(text("""
+        conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS pedidos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            numero INTEGER,
+            fecha TEXT,
+            nombre TEXT,
+            tipo_entrega TEXT,
+            direccion TEXT,
+            mesa TEXT,
+            efectivo REAL,
+            nequi REAL,
+            total REAL
+        );
+        """))
+
+        conn.execute(text("""
         CREATE TABLE IF NOT EXISTS detalle_pedidos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             pedido_id INTEGER,
             referencia TEXT,
             precio REAL
-        )
-    """))
-
-
-def crear_tablas():
-    with engine.connect() as conn:
-        conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS pedidos (
-            id SERIAL PRIMARY KEY,
-            numero INT,
-            fecha TIMESTAMP,
-            nombre TEXT,
-            tipo_entrega TEXT,
-            direccion TEXT,
-            mesa TEXT,
-            efectivo FLOAT,
-            nequi FLOAT,
-            total FLOAT
         );
         """))
-
-        conn.execute(text("""
-        CREATE TABLE IF NOT EXISTS detalle_pedido (
-            id SERIAL PRIMARY KEY,
-            pedido_id INT,
-            referencia TEXT,
-            descripcion TEXT,
-            precio FLOAT,
-            FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
-        );
-        """))
-
 
 crear_tablas()
 
@@ -94,7 +93,6 @@ def generar_numero_pedido():
     except:
         return 1
 
-
 # ==============================
 # MENU
 # ==============================
@@ -108,13 +106,11 @@ def cargar_menu():
     df["PRECIO"] = pd.to_numeric(df["PRECIO"], errors="coerce").fillna(0)
     return df
 
-
 @app.context_processor
 def carrito_global():
     carrito = session.get("carrito", [])
     total = sum(item["PRECIO"] for item in carrito)
     return dict(carrito_cantidad=len(carrito), carrito_total=total)
-
 
 # ==============================
 # RUTAS
@@ -125,16 +121,14 @@ def index():
     categorias = sorted(menu["CATEGORIA"].dropna().unique())
     return render_template("categorias.html", categorias=categorias)
 
-
 @app.route("/categoria/<nombre>")
 def ver_categoria(nombre):
     menu = cargar_menu()
     productos = menu[menu["CATEGORIA"] == nombre]
     return render_template("productos.html", categoria=nombre, productos=productos.to_dict(orient="records"))
 
-
 # ==============================
-# AGREGAR
+# CARRITO
 # ==============================
 @app.route("/agregar", methods=["POST"])
 def agregar():
@@ -158,10 +152,6 @@ def agregar():
 
     return redirect(url_for("ver_carrito"))
 
-
-# ==============================
-# ELIMINAR
-# ==============================
 @app.route("/eliminar/<int:index>")
 def eliminar(index):
     carrito = session.get("carrito", [])
@@ -173,10 +163,6 @@ def eliminar(index):
 
     return redirect(url_for("ver_carrito"))
 
-
-# ==============================
-# DUPLICAR
-# ==============================
 @app.route("/duplicar/<int:index>")
 def duplicar(index):
     carrito = session.get("carrito", [])
@@ -187,7 +173,6 @@ def duplicar(index):
     session.modified = True
 
     return redirect(url_for("ver_carrito"))
-
 
 # ==============================
 # EDITAR
@@ -201,7 +186,6 @@ def editar(index):
         return redirect(url_for("ver_carrito"))
 
     return render_template("editar_producto.html", item=carrito[index], index=index)
-
 
 @app.route("/actualizar/<int:index>", methods=["POST"])
 def actualizar(index):
@@ -218,9 +202,8 @@ def actualizar(index):
 
     return redirect(url_for("ver_carrito"))
 
-
 # ==============================
-# CARRITO
+# VER CARRITO
 # ==============================
 @app.route("/carrito")
 def ver_carrito():
@@ -228,9 +211,8 @@ def ver_carrito():
     total = sum(item["PRECIO"] for item in carrito)
     return render_template("carrito.html", carrito=carrito, total=total)
 
-
 # ==============================
-# FINALIZAR (GUARDA EN BD)
+# FINALIZAR
 # ==============================
 @app.route("/finalizar", methods=["POST"])
 def finalizar():
@@ -248,7 +230,7 @@ def finalizar():
 
     pedido = {
         "numero": generar_numero_pedido(),
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),  # 🔥 mejor formato
+        "fecha": hora_colombia().strftime("%Y-%m-%d %H:%M:%S"),
         "nombre": request.form.get("nombre"),
         "tipo_entrega": request.form.get("tipo_entrega"),
         "direccion": request.form.get("direccion"),
@@ -259,9 +241,9 @@ def finalizar():
         "cambio": cambio
     }
 
-    # 🔥 AQUÍ VA TODO BIEN INDENTADO
     with engine.begin() as conn:
-        result = conn.execute(text("""
+
+        conn.execute(text("""
             INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
             VALUES (:numero, :fecha, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
         """), {
@@ -276,7 +258,7 @@ def finalizar():
             "total": total
         })
 
-        pedido_id = result.lastrowid
+        pedido_id = conn.execute(text("SELECT last_insert_rowid()")).scalar()
 
         for item in carrito:
             conn.execute(text("""
@@ -292,106 +274,49 @@ def finalizar():
 
     return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
 
-    # 🔥 GUARDAR EN BASE DE DATOS
-    with engine.begin() as conn:
-
-        result = conn.execute(text("""
-            INSERT INTO pedidos (numero, fecha, nombre, tipo_entrega, direccion, mesa, efectivo, nequi, total)
-            VALUES (:numero, CURRENT_TIMESTAMP, :nombre, :tipo_entrega, :direccion, :mesa, :efectivo, :nequi, :total)
-            RETURNING id;
-        """), {
-            "numero": pedido["numero"],
-            "nombre": pedido["nombre"],
-            "tipo_entrega": pedido["tipo_entrega"],
-            "direccion": pedido["direccion"],
-            "mesa": pedido["mesa"],
-            "efectivo": pago_efectivo,
-            "nequi": pago_nequi,
-            "total": total
-        })
-
-        pedido_id = result.fetchone()[0]
-
-        for item in carrito:
-            conn.execute(text("""
-                INSERT INTO detalle_pedido (pedido_id, referencia, descripcion, precio)
-                VALUES (:pedido_id, :referencia, :descripcion, :precio)
-            """), {
-                "pedido_id": pedido_id,
-                "referencia": item["REFERENCIA"],
-                "descripcion": item["DESCRIPCION"],
-                "precio": item["PRECIO"]
-            })
-
-    session["pedido"] = pedido
-
-    return render_template("confirmacion.html", pedido=pedido, carrito=carrito, total=total)
-
-
 # ==============================
-# REPORTE PRO
+# REPORTE
 # ==============================
-
 @app.route("/reporte")
 def reporte():
-    import pandas as pd
     from io import BytesIO
 
-    # ==============================
-    # 1. RESUMEN POR DÍA
-    # ==============================
     resumen = pd.read_sql("""
         SELECT 
             DATE(fecha) as fecha,
             SUM(total) as venta_total,
             SUM(efectivo) as efectivo,
-            SUM(nequi) as nequi,
-            
-            COUNT(CASE 
-                WHEN LOWER(tipo_entrega) LIKE '%domicilio%' 
-                THEN 1 END) as domicilios,
-
-            SUM(CASE 
-                WHEN LOWER(tipo_entrega) LIKE '%domicilio%' 
-                THEN total ELSE 0 END) as dinero_domicilios
-
+            SUM(nequi) as nequi
         FROM pedidos
         GROUP BY DATE(fecha)
         ORDER BY DATE(fecha) DESC
     """, engine)
 
-    # ==============================
-    # 2. PRODUCTOS POR DÍA
-    # ==============================
     productos = pd.read_sql("""
-    SELECT 
-        DATE(p.fecha) as fecha,
-        d.referencia,
-        COUNT(*) as cantidad,
-        SUM(d.precio) as total
-    FROM detalle_pedidos d
-    JOIN pedidos p ON d.pedido_id = p.id
-    GROUP BY DATE(p.fecha), d.referencia
-    ORDER BY DATE(p.fecha) DESC
-""", engine)
+        SELECT 
+            DATE(p.fecha) as fecha,
+            d.referencia,
+            COUNT(d.referencia) as cantidad,
+            SUM(d.precio) as total
+        FROM detalle_pedidos d
+        JOIN pedidos p ON d.pedido_id = p.id
+        GROUP BY DATE(p.fecha), d.referencia
+        ORDER BY DATE(p.fecha) DESC
+    """, engine)
 
-    # ==============================
-    # EXPORTAR A EXCEL
-    # ==============================
     output = BytesIO()
 
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        resumen.to_excel(writer, index=False, sheet_name="Resumen Diario")
-        productos.to_excel(writer, index=False, sheet_name="Productos por Día")
+        resumen.to_excel(writer, index=False, sheet_name="Resumen")
+        productos.to_excel(writer, index=False, sheet_name="Productos")
 
     output.seek(0)
 
-    return send_file(
-        output,
-        download_name="reporte_completo.xlsx",
-        as_attachment=True
-    )    
+    return send_file(output, download_name="reporte.xlsx", as_attachment=True)
 
+# ==============================
+# TICKET
+# ==============================
 @app.route("/ticket")
 def ticket():
     carrito = session.get("carrito", [])
@@ -399,19 +324,13 @@ def ticket():
     total = sum(item["PRECIO"] for item in carrito)
     return render_template("ticket.html", carrito=carrito, total=total, pedido=pedido)
 
-
 @app.route("/limpiar")
 def limpiar():
     session.clear()
     return redirect(url_for("index"))
 
-
+# ==============================
+# RUN
+# ==============================
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-import pandas as pd
-
-print("PRUEBA TABLA DETALLE_PEDIDOS:")
-print(pd.read_sql("SELECT * FROM detalle_pedidos", engine))    
-
