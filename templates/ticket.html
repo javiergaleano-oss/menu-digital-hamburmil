@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html>
 <head>
     <title>Ticket</title>
     <style>
-        body { font-family: monospace; max-width: 260px; margin:auto; font-size:13px; }
-        hr { border: 1px dashed black; margin:5px 0; }
+        body { font-family: monospace; max-width: 280px; margin:auto; font-size:16px; }
+        hr { border: 1px dashed black; margin: 5px 0; }
         .center { text-align:center; }
         .right { text-align:right; }
     </style>
@@ -22,17 +23,43 @@
 Cliente: {{ pedido.nombre }}<br>
 Entrega: {{ pedido.tipo_entrega }}
 
+{% if pedido.tipo_entrega == "Domicilio" and pedido.direccion %} <br>Dirección: {{ pedido.direccion }}
+{% endif %}
+
+{% if pedido.tipo_entrega == "Mesa" and pedido.mesa %} <br>Mesa: {{ pedido.mesa }}
+{% endif %}
+
 <hr>
 
-{% for item in carrito %}
+{% for item in carrito_agrupado %}
+
 <p>
-{{ item.REFERENCIA }} ........ $ {{ "{:,.0f}".format(item.PRECIO) }}
+{{ item.cantidad }} x {{ item.REFERENCIA }} .... $ {{ "{:,.0f}".format(item.PRECIO * item.cantidad) }}
+
+{% for detalle, cant in item.detalles.items() %}
+{% if detalle.strip() != "||" %} <br> - {{ cant }} {{ detalle.replace("|", " / ") }}
+{% endif %}
+{% endfor %}
+
 </p>
+
 {% endfor %}
 
 <hr>
 
 <p class="right"><strong>TOTAL: $ {{ "{:,.0f}".format(total) }}</strong></p>
+
+<hr>
+
+<p>
+Efectivo: $ {{ "{:,.0f}".format(pedido.efectivo) }}<br>
+Nequi: $ {{ "{:,.0f}".format(pedido.nequi) }}
+</p>
+
+{% if pedido.cambio > 0 %}
+
+<p>Cambio: $ {{ "{:,.0f}".format(pedido.cambio) }}</p>
+{% endif %}
 
 <hr>
 
@@ -42,9 +69,11 @@ Entrega: {{ pedido.tipo_entrega }}
 
 <br><br>
 
-<a href="/ticket_texto">
+<!-- 🔥 BOTÓN CORREGIDO -->
+
+<a href="/ticket_rawbt">
     <button style="width:100%; padding:10px; font-size:16px;">
-        🖨️ Imprimir en RawBT
+        🖨️ Imprimir
     </button>
 </a>
 
@@ -56,3 +85,4 @@ if (window.innerWidth > 768) {
 
 </body>
 </html>
+

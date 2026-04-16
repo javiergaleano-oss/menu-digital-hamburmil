@@ -4,59 +4,67 @@
 <h2 class="mb-4">🛒 Tu Pedido</h2>
 
 {% with messages = get_flashed_messages() %}
-  {% if messages %}
-    <div class="alert alert-danger">
-      {{ messages[0] }}
-    </div>
-  {% endif %}
+{% if messages %}
+
+<div class="alert alert-danger">
+{{ messages[0] }}
+</div>
+{% endif %}
 {% endwith %}
 
 {% if carrito %}
 
 <ul class="list-group mb-3">
     {% for item in carrito %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">
-        
+    <li class="list-group-item">
+
+```
+    <div class="d-flex justify-content-between">
+
+        <!-- IZQUIERDA -->
         <div>
             <strong>{{ item.CATEGORIA }}</strong><br>
-            {{ item.DESCRIPCION }}<br>
+            {{ item.DESCRIPCION }}
 
             {% if item.SALSAS %}
-            <small class="text-muted">Salsas: {{ item.SALSAS }}</small><br>
+            <br><small class="text-muted">Salsas: {{ item.SALSAS }}</small>
             {% endif %}
 
             {% if item.EXTRAS %}
-            <small class="text-muted">Extras: {{ item.EXTRAS }}</small><br>
+            <br><small class="text-muted">Extras: {{ item.EXTRAS }}</small>
+            {% endif %}
+
+            {% if item.CAMBIOS %}
+            <br><small class="text-danger">Cambios: {{ item.CAMBIOS }}</small>
             {% endif %}
 
             <!-- BOTONES -->
             <div class="mt-2">
-
                 <a href="{{ url_for('eliminar', index=loop.index0) }}"
                    class="btn btn-danger btn-sm"
-                   onclick="return confirm('¿Eliminar producto?')">
-                   🗑
-                </a>
+                   onclick="return confirm('¿Eliminar producto?')">🗑</a>
 
                 <a href="{{ url_for('duplicar', index=loop.index0) }}"
-                   class="btn btn-success btn-sm">
-                   ➕
-                </a>
+                   class="btn btn-success btn-sm">➕</a>
 
                 <a href="{{ url_for('editar', index=loop.index0) }}"
-                   class="btn btn-warning btn-sm">
-                   ✏️
-                </a>
-
+                   class="btn btn-warning btn-sm">✏️</a>
             </div>
         </div>
 
-        <span class="fw-bold text-success">
-            $ {{ "{:,.0f}".format(item.PRECIO) }}
-        </span>
+        <!-- DERECHA -->
+        <div class="text-end">
+            <strong class="text-success">
+                $ {{ "{:,.0f}".format(item.PRECIO) }}
+            </strong>
+        </div>
 
-    </li>
-    {% endfor %}
+    </div>
+
+</li>
+{% endfor %}
+```
+
 </ul>
 
 <h4 class="text-end mb-4">
@@ -69,70 +77,60 @@
 
 <form action="/finalizar" method="POST">
 
-    <input type="hidden" id="total_hidden" value="{{ total }}">
+<input type="hidden" id="total_hidden" value="{{ total }}">
 
-    <!-- CLIENTE -->
-    <div class="mb-3">
-        <label class="form-label">Nombre del cliente</label>
-        <input type="text" name="nombre" class="form-control" required>
-    </div>
+<div class="mb-3">
+    <label class="form-label">Nombre del cliente</label>
+    <input type="text" name="nombre" class="form-control" required>
+</div>
 
-    <!-- ENTREGA -->
-    <div class="mb-3">
-        <label class="form-label">Tipo de entrega</label>
-        <select name="tipo_entrega" id="tipo_entrega" class="form-select" required onchange="mostrarCampos()">
-            <option value="">Seleccione</option>
-            <option value="Local">Recoger en Local</option>
-            <option value="Domicilio">Domicilio</option>
-            <option value="Mesa">Servicio a la Mesa</option>
-            <option value="Para llevar">Para llevar</option>
-            <option value="Para la barra">Para la barra</option>
-        </select>
-    </div>
+<div class="mb-3">
+    <label class="form-label">Tipo de entrega</label>
+    <select name="tipo_entrega" id="tipo_entrega" class="form-select" required onchange="mostrarCampos()">
+        <option value="">Seleccione</option>
+        <option value="Local">Recoger en Local</option>
+        <option value="Domicilio">Domicilio</option>
+        <option value="Mesa">Servicio a la Mesa</option>
+        <option value="Para llevar">Para llevar</option>
+        <option value="Para la barra">Para la barra</option>
+    </select>
+</div>
 
-    <!-- DIRECCION -->
-    <div class="mb-3" id="campo_direccion" style="display:none;">
-        <label class="form-label">Dirección</label>
-        <input type="text" name="direccion" class="form-control">
-    </div>
+<div class="mb-3" id="campo_direccion" style="display:none;">
+    <label class="form-label">Dirección</label>
+    <input type="text" name="direccion" id="direccion" class="form-control">
+</div>
 
-    <!-- MESA -->
-    <div class="mb-3" id="campo_mesa" style="display:none;">
-        <label class="form-label">Número de Mesa</label>
-        <input type="text" name="mesa" class="form-control">
-    </div>
+<div class="mb-3" id="campo_mesa" style="display:none;">
+    <label class="form-label">Número de Mesa</label>
+    <input type="text" name="mesa" id="mesa" class="form-control">
+</div>
 
-    <hr>
+<hr>
 
-    <h5>💳 Pagos</h5>
+<h5>💳 Pagos</h5>
 
-    <!-- EFECTIVO -->
-    <div class="mb-3">
-        <label>Efectivo</label>
-        <input type="number" id="efectivo" name="pago_efectivo" class="form-control" value="0" oninput="calcularPago()">
-    </div>
+<div class="mb-3">
+    <label>Efectivo</label>
+    <input type="number" id="efectivo" name="pago_efectivo" class="form-control" value="0" oninput="calcularPago()">
+</div>
 
-    <!-- NEQUI -->
-    <div class="mb-3">
-        <label>Nequi</label>
-        <input type="number" id="nequi" name="pago_nequi" class="form-control" value="0" oninput="calcularPago()">
-    </div>
+<div class="mb-3">
+    <label>Nequi</label>
+    <input type="number" id="nequi" name="pago_nequi" class="form-control" value="0" oninput="calcularPago()">
+</div>
 
-  
+<div class="alert alert-warning">
+    Faltante: $ <span id="faltante">0</span><br>
+    Cambio: $ <span id="cambio">0</span>
+</div>
 
-    <!-- RESULTADO -->
-    <div class="alert alert-warning">
-        Faltante: $ <span id="faltante">0</span><br>
-        Cambio: $ <span id="cambio">0</span>
-    </div>
-
-    <button type="submit" class="btn btn-success w-100 mb-3">
-        Confirmar Pedido
-    </button>
+<button type="submit" class="btn btn-success w-100 mb-3">
+    Confirmar Pedido
+</button>
 
 </form>
 
-<!-- SEGUIR COMPRANDO -->
 <a href="{{ url_for('index') }}" class="btn btn-primary w-100">
     🛒 Seguir comprando
 </a>
@@ -151,11 +149,17 @@
 function mostrarCampos() {
     let tipo = document.getElementById("tipo_entrega").value;
 
-    document.getElementById("campo_direccion").style.display =
-        (tipo === "Domicilio") ? "block" : "none";
+    let campoDireccion = document.getElementById("campo_direccion");
+    let campoMesa = document.getElementById("campo_mesa");
 
-    document.getElementById("campo_mesa").style.display =
-        (tipo === "Mesa") ? "block" : "none";
+    let direccion = document.getElementById("direccion");
+    let mesa = document.getElementById("mesa");
+
+    campoDireccion.style.display = (tipo === "Domicilio") ? "block" : "none";
+    campoMesa.style.display = (tipo === "Mesa") ? "block" : "none";
+
+    if (tipo !== "Domicilio") direccion.value = "";
+    if (tipo !== "Mesa") mesa.value = "";
 }
 
 function calcularPago() {

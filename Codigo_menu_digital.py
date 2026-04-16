@@ -5,6 +5,8 @@ import json
 from datetime import datetime
 import pytz
 from sqlalchemy import create_engine, text
+import base64
+from flask import Response
 
 # ==============================
 # HORA COLOMBIA
@@ -195,6 +197,7 @@ def actualizar(index):
 
     carrito[index]["SALSAS"] = ", ".join(request.form.getlist("salsas"))
     carrito[index]["EXTRAS"] = ", ".join(request.form.getlist("extras"))
+    carrito[index]["CAMBIOS"] = ", ".join(request.form.getlist("cambios"))
 
     session["carrito"] = carrito
     session.modified = True
@@ -227,13 +230,25 @@ def finalizar():
     restante = max(0, total - total_pagado)
     cambio = max(0, total_pagado - total)
 
+    tipo_entrega = request.form.get("tipo_entrega")
+
+    direccion = request.form.get("direccion") or ""
+    mesa = request.form.get("mesa") or ""
+
+    # 🔥 LIMPIEZA INTELIGENTE (CLAVE)
+    if tipo_entrega != "Domicilio":
+        direccion = ""
+
+    if tipo_entrega != "Mesa":
+        mesa = ""
+
     pedido = {
         "numero": generar_numero_pedido(),
         "fecha": hora_colombia().strftime("%Y-%m-%d %H:%M:%S"),
         "nombre": request.form.get("nombre"),
-        "tipo_entrega": request.form.get("tipo_entrega"),
-        "direccion": request.form.get("direccion"),
-        "mesa": request.form.get("mesa"),
+        "tipo_entrega": tipo_entrega,
+        "direccion": direccion,
+        "mesa": mesa,
         "efectivo": pago_efectivo,
         "nequi": pago_nequi,
         "restante": restante,
@@ -321,7 +336,122 @@ def ticket():
     carrito = session.get("carrito", [])
     pedido = session.get("pedido", {})
     total = sum(item["PRECIO"] for item in carrito)
-    return render_template("ticket.html", carrito=carrito, total=total, pedido=pedido)
+
+    agrupado = {}
+
+    for item in carrito:
+        ref = item["REFERENCIA"]
+
+        if ref not in agrupado:
+            agrupado[ref] = {
+                "REFERENCIA": ref,
+                "PRECIO": item["PRECIO"],
+                "cantidad": 0,
+                "detalles": {}
+            }
+
+        agrupado[ref]["cantidad"] += 1
+
+        # 🔥 combinación única de cambios
+        detalle = (
+            item.get("SALSAS", "") + "|" +
+            item.get("EXTRAS", "") + "|" +
+            item.get("CAMBIOS", "")
+        )
+
+        if detalle not in agrupado[ref]["detalles"]:
+            agrupado[ref]["detalles"][detalle] = 0
+
+        agrupado[ref]["detalles"][detalle] += 1
+
+    return render_template(
+        "ticket.html",
+        carrito_agrupado=agrupado.values(),
+        total=total,
+        pedido=pedido
+    )
+
+import base64
+
+@app.route("/ticket_rawbt")
+def ticket_rawbt():
+    carrito = session.get("carrito", [])
+    pedido = session.get("pedido", {})
+    total = sum(item["PRECIO"] for item in carrito)
+
+    # 🔥 AGRUPAR (igual que tu ticket)
+    agrupado = {}
+
+    for item in carrito:
+        ref = item["REFERENCIA"]
+
+        if ref not in agrupado:
+            agrupado[ref] = {
+                "REFERENCIA": ref,
+                "PRECIO": item["PRECIO"],
+                "cantidad": 0,
+                "detalles": {}
+            }
+
+        agrupado[ref]["cantidad"] += 1
+
+        detalle = (
+            item.get("SALSAS", "") + "|" +
+            item.get("EXTRAS", "") + "|" +
+            item.get("CAMBIOS", "")
+        )
+
+        if detalle not in agrupado[ref]["detalles"]:
+            agrupado[ref]["detalles"][detalle] = 0
+
+        agrupado[ref]["detalles"][detalle] += 1
+
+    # 🔥 TEXTO PARA IMPRESORA
+    texto = "HAMBURMIL DECEPAZ\n"
+    texto += f"{pedido.get('fecha')}\n"
+    texto += f"Pedido #{pedido.get('numero')}\n\n"
+
+    texto += f"Cliente: {pedido.get('nombre')}\n"
+    texto += f"Entrega: {pedido.get('tipo_entrega')}\n"
+
+    if pedido.get("direccion"):
+        texto += f"Direccion: {pedido.get('direccion')}\n"
+
+    if pedido.get("mesa"):
+        texto += f"Mesa: {pedido.get('mesa')}\n"
+
+    texto += "\n----------------------\n"
+
+    for item in agrupado.values():
+        texto += f"{item['cantidad']} x {item['REFERENCIA']}  ${int(item['PRECIO'] * item['cantidad'])}\n"
+
+        for detalle, cant in item["detalles"].items():
+            if detalle.strip() != "||":
+                limpio = detalle.replace("|", " / ")
+                texto += f"  - {cant} {limpio}\n"
+
+    texto += "\n----------------------\n"
+    texto += f"TOTAL: ${int(total)}\n"
+
+    texto += f"Efectivo: ${int(pedido.get('efectivo',0))}\n"
+    texto += f"Nequi: ${int(pedido.get('nequi',0))}\n"
+
+    if pedido.get("cambio", 0) > 0:
+        texto += f"Cambio: ${int(pedido.get('cambio'))}\n"
+
+    texto += "\nGracias por su compra\n\n"
+
+    # 🔥 CONVERTIR A BASE64
+    data = base64.b64encode(texto.encode("utf-8")).decode()
+
+    return f"""
+    <html>
+    <script>
+    window.location.href = "rawbt:base64,{data}";
+    </script>
+    </html>
+    """
+
 
 @app.route("/limpiar")
 def limpiar():
