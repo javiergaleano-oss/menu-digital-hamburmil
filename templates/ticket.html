@@ -8,18 +8,18 @@
             font-family: monospace; 
             width: 100%;
             margin: 0; 
-            font-size:20px; /* 🔥 aumentado */
+            font-size:24px; /* 🔥 MÁS GRANDE */
         }
 
 ```
     hr { 
         border: 1px dashed black; 
-        margin: 5px 0; 
+        margin: 4px 0; 
     }
 
     .center { 
         text-align:center; 
-        font-size:22px;
+        font-size:26px; /* 🔥 título más grande */
         font-weight:bold;
     }
 
@@ -27,15 +27,15 @@
         text-align:right; 
     }
 
-    /* 🔥 NUEVO: línea en una sola fila */
     .item-line {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        font-size:24px;
     }
 
     .item-line span:first-child {
-        max-width: 70%;
+        max-width: 65%; /* 🔥 menos ancho para evitar salto */
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -43,11 +43,12 @@
 
     .item-line span:last-child {
         text-align: right;
-        min-width: 30%;
+        min-width: 35%;
     }
 
     p {
-        margin: 3px 0;
+        margin: 2px 0; /* 🔥 más compacto */
+        font-size:22px;
     }
 </style>
 ```
@@ -115,7 +116,7 @@ Nequi: $ {{ "{:,.0f}".format(pedido.nequi) }}
 <br><br>
 
 <a href="/ticket_rawbt">
-    <button style="width:100%; padding:10px; font-size:16px;">
+    <button style="width:100%; padding:10px; font-size:18px;">
         🖨️ Imprimir
     </button>
 </a>
