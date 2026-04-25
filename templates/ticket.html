@@ -6,26 +6,52 @@
     <style>
         body { 
             font-family: monospace; 
-            width: 100%;           /* 🔥 clave */
+            width: 100%;
             margin: 0; 
-            font-size:18px;        /* un poco menor para que quepa */
+            font-size:20px; /* 🔥 aumentado */
         }
 
-        hr { 
-            border: 1px dashed black; 
-            margin: 7px 0; 
-        }
+```
+    hr { 
+        border: 1px dashed black; 
+        margin: 5px 0; 
+    }
 
-        .center { 
-            text-align:center; 
-            font-size:20px;
-            font-weight:bold;
-        }
+    .center { 
+        text-align:center; 
+        font-size:22px;
+        font-weight:bold;
+    }
 
-        .right { 
-            text-align:right; 
-        }
-    </style>
+    .right { 
+        text-align:right; 
+    }
+
+    /* 🔥 NUEVO: línea en una sola fila */
+    .item-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .item-line span:first-child {
+        max-width: 70%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .item-line span:last-child {
+        text-align: right;
+        min-width: 30%;
+    }
+
+    p {
+        margin: 3px 0;
+    }
+</style>
+```
+
 </head>
 <body>
 
@@ -50,15 +76,17 @@ Entrega: {{ pedido.tipo_entrega }}
 
 {% for item in carrito_agrupado %}
 
-<p>
-{{ item.cantidad }} x {{ item.REFERENCIA }} .... $ {{ "{:,.0f}".format(item.PRECIO * item.cantidad) }}
+<div class="item-line">
+    <span>{{ item.cantidad }} x {{ item.REFERENCIA }}</span>
+    <span>$ {{ "{:,.0f}".format(item.PRECIO * item.cantidad) }}</span>
+</div>
 
 {% for detalle, cant in item.detalles.items() %}
-{% if detalle.strip() != "||" %} <br> - {{ cant }} {{ detalle.replace("|", " / ") }}
+{% if detalle.strip() != "||" %}
+
+<p style="margin-left:10px;">- {{ cant }} {{ detalle.replace("|", " / ") }}</p>
 {% endif %}
 {% endfor %}
-
-</p>
 
 {% endfor %}
 
@@ -86,8 +114,6 @@ Nequi: $ {{ "{:,.0f}".format(pedido.nequi) }}
 
 <br><br>
 
-<!-- 🔥 BOTÓN CORREGIDO -->
-
 <a href="/ticket_rawbt">
     <button style="width:100%; padding:10px; font-size:16px;">
         🖨️ Imprimir
@@ -102,4 +128,3 @@ if (window.innerWidth > 768) {
 
 </body>
 </html>
-
